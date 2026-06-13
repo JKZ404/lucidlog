@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LucidLog — Dream Companion</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LucidLog">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
+<script>
+/* Inline PWA manifest — crescent moon icon as data URI */
+(function(){
+  var c=document.createElement('canvas');c.width=512;c.height=512;
+  var x=c.getContext('2d');
+  x.fillStyle='#0D1B2A';x.fillRect(0,0,512,512);
+  x.beginPath();x.arc(256,256,180,0,Math.PI*2);x.fillStyle='#9FEAE8';x.fill();
+  x.beginPath();x.arc(310,210,140,0,Math.PI*2);x.fillStyle='#0D1B2A';x.fill();
+  var p512=c.toDataURL('image/png');
+  var c2=document.createElement('canvas');c2.width=192;c2.height=192;
+  c2.getContext('2d').drawImage(c,0,0,192,192);
+  var p192=c2.toDataURL('image/png');
+  window.__MOON_ICON_512=p512;
+  var m=JSON.stringify({
+    name:"LucidLog",short_name:"LucidLog",display:"standalone",
+    orientation:"portrait-primary",theme_color:"#9FEAE8",
+    background_color:"#0D1B2A",start_url:".",
+    icons:[{src:p512,sizes:"512x512",type:"image/png"},{src:p192,sizes:"192x192",type:"image/png"}]
+  });
+  var l=document.createElement('link');l.rel='manifest';
+  l.href='data:application/manifest+json,'+encodeURIComponent(m);
+  document.head.appendChild(l);
+  var ai=document.createElement('link');ai.rel='apple-touch-icon';ai.href=p512;
+  document.head.appendChild(ai);
+})();
+</script>
+<style>
+/* ========== DESIGN SYSTEM ========== */
+:root {
+  --accent: #9FEAE8;
+  --accent-dim: rgba(159,234,232,0.12);
+  --accent-glow: rgba(159,234,232,0.06);
+  --bg: #0D1B2A;
+  --surface: #152238;
+  --text: #F0F4F8;
+  --muted: #A8B4BC;
+  --card-bg: rgba(21,34,56,0.85);
+  --input-bg: rgba(21,34,56,0.6);
+  --overlay: rgba(13,27,42,0.88);
+  --card-border: rgba(159,234,232,0.25);
+  --card-shadow: 0 4px 32px rgba(159,234,232,0.08);
+  --danger: #F87171;
+  --warning: #FBBF24;
+  --success: #34D399;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --transition: 0.25s ease;
+  --nav-height: 68px;
+  --sidebar-width: 240px;
+  --gold: #F5D97A;
+  --mist: rgba(159,234,232,0.07);
+}
+
+/* ========== RESET ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6;
+  min-height: 100dvh; overflow-x: hidden;
+}
+h1,h2,h3,h4 { font-family: 'Lora', Georgia, serif; font-weight: 600; line-height: 1.25; }
+h1 { font-size: 2rem; } h2 { font-size: 1.5rem; } h3 { font-size: 1.2rem; }
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+button { font-family: 'Inter', sans-serif; cursor: pointer; border: none; background: none; color: inherit; font-size: inherit; }
+input, textarea, select {
+  font-family: 'Inter', sans-serif; color: var(--text); background: var(--input-bg);
+  border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+  padding: 10px 14px; font-size: 0.95rem; transition: border var(--transition); outline: none; width: 100%;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 120px; }
+a { color: var(--accent); text-decoration: none; }
+ul, ol { list-style: none; }
+
+.atmos-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, var(--accent-glow), transparent),
+    radial-gradient(ellipse 50% 40% at 80% 70%, var(--accent-glow), transparent);
+}
+.star-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.star-field .star {
+  position: absolute; width: 2px; height: 2px; background: var(--accent);
+  border-radius: 50%; opacity: 0.3; animation: twinkle 4s ease-in-out infinite alternate;
+}
+@keyframes twinkle { 0% { opacity: 0.15; } 100% { opacity: 0.6; } }
+
+/* ========== LAYOUT ========== */
+.app-shell { position: relative; z-index: 1; display: flex; min-height: 100dvh; }
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width);
+  background: var(--surface); border-right: 1px solid var(--card-border);
+  display: flex; flex-direction: column; padding: 24px 0; z-index: 50;
+}
+.sidebar-logo { padding: 0 24px 28px; display: flex; align-items: center; gap: 12px; }
+.sidebar-logo .logo-moon { width: 36px; height: 36px; flex-shrink: 0; }
+.sidebar-logo span { font-family: 'Lora', serif; font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 12px; }
+.sidebar-nav a {
+  display: flex; align-items: center; gap: 12px; padding: 11px 16px;
+  border-radius: var(--radius-sm); color: var(--muted); font-weight: 500;
+  transition: all var(--transition); font-size: 0.93rem;
+}
+.sidebar-nav a:hover { color: var(--text); background: var(--accent-dim); }
+.sidebar-nav a.active { color: var(--accent); background: var(--accent-dim); }
+.sidebar-nav a i { width: 20px; height: 20px; flex-shrink: 0; }
+.sidebar-footer { padding: 16px 24px; border-top: 1px solid var(--card-border); margin-top: auto; }
+.main-content { flex: 1; margin-left: var(--sidebar-width); padding: 36px 40px; max-width: 1080px; width: 100%; }
+.bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-height); background: var(--surface);
+  border-top: 1px solid var(--card-border); z-index: 50;
+  padding: 0 4px; align-items: center; justify-content: space-around;
+}
+.bottom-nav a {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 0; color: var(--muted); font-size: 0.62rem; font-weight: 600;
+  transition: color var(--transition); flex: 1; text-align: center; letter-spacing: 0.02em;
+}
+.bottom-nav a.active { color: var(--accent); }
+.bottom-nav a i { width: 22px; height: 22px; }
+
+/* ========== CARDS ========== */
+.card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 24px; box-shadow: var(--card-shadow);
+}
+
+/* ========== BUTTONS ========== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border-radius: var(--radius-sm); font-weight: 600;
+  font-size: 0.9rem; transition: all var(--transition);
+}
+.btn-primary { background: var(--accent); color: #0D1B2A; }
+.btn-primary:hover { background: #b5f0ee; transform: translateY(-1px); }
+.btn-secondary { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--card-border); }
+.btn-secondary:hover { background: rgba(159,234,232,0.2); border-color: var(--accent); }
+.btn-danger { background: rgba(248,113,113,0.15); color: var(--danger); }
+.btn-danger:hover { background: rgba(248,113,113,0.25); }
+.btn-sm { padding: 7px 14px; font-size: 0.82rem; }
+.btn-icon { width: 40px; height: 40px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.btn-gold { background: rgba(245,217,122,0.15); color: var(--gold); border: 1px solid rgba(245,217,122,0.3); }
+.btn-gold:hover { background: rgba(245,217,122,0.25); border-color: var(--gold); }
+
+/* ========== BADGES & CHIPS ========== */
+.badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.badge-accent { background: var(--accent-dim); color: var(--accent); }
+.badge-warning { background: rgba(251,191,36,0.15); color: var(--warning); }
+.badge-gold { background: rgba(245,217,122,0.15); color: var(--gold); }
+.badge-lucid { background: rgba(159,234,232,0.2); color: var(--accent); border: 1px solid rgba(159,234,232,0.4); }
+.chip {
+  display: inline-flex; align-items: center; padding: 6px 14px;
+  border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+  border: 1px solid var(--card-border); cursor: pointer;
+  transition: all var(--transition); user-select: none;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip.selected { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+/* ========== ACCORDION ========== */
+.accordion-item { border: 1px solid var(--card-border); border-radius: var(--radius-xs); overflow: hidden; margin-bottom: 6px; }
+.accordion-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+  background: rgba(159,234,232,0.04); transition: background var(--transition);
+}
+.accordion-header:hover { background: var(--accent-dim); }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+.accordion-body.open { max-height: 600px; }
+.accordion-body-inner { padding: 12px 16px 16px; color: var(--muted); line-height: 1.7; font-size: 0.9rem; }
+.chevron { transition: transform var(--transition); }
+.accordion-header.open .chevron { transform: rotate(180deg); }
+
+/* ========== STAR SLIDER ========== */
+.star-slider { display: flex; gap: 4px; }
+.star-slider .star-btn {
+  width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; transition: all var(--transition); font-size: 1.15rem;
+  color: var(--muted); background: transparent; border: 1px solid transparent;
+}
+.star-slider .star-btn.filled { color: var(--accent); background: var(--accent-dim); border-color: rgba(159,234,232,0.3); }
+.star-slider .star-btn:hover { transform: scale(1.15); border-color: var(--card-border); }
+
+/* ========== PAGE TRANSITIONS ========== */
+.page { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ========== MODAL ========== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 150; background: var(--overlay);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); animation: fadeIn 0.25s ease; padding: 20px;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 28px; max-width: 540px;
+  width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: var(--card-shadow);
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h2 { margin: 0; }
+
+/* ========== EMPTY STATES ========== */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 56px 24px; text-align: center; }
+.empty-state svg { margin-bottom: 20px; opacity: 0.5; }
+.empty-state h3 { margin-bottom: 8px; }
+.empty-state p { color: var(--muted); max-width: 340px; margin-bottom: 24px; }
+
+/* ========== TOAST ========== */
+.toast-container { position: fixed; top: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--surface); border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm); padding: 12px 18px; font-size: 0.88rem;
+  box-shadow: var(--card-shadow); animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 10px;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ========== ONBOARDING ========== */
+.onboarding-overlay {
+  position: fixed; inset: 0; z-index: 200; background: var(--overlay);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px); animation: fadeIn 0.4s ease;
+}
+.onboarding-card {
+  background: var(--surface); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 44px 36px; max-width: 460px;
+  width: 90%; text-align: center; box-shadow: var(--card-shadow);
+}
+.onboarding-card h2 { margin-bottom: 12px; }
+.onboarding-card p { color: var(--muted); margin-bottom: 24px; line-height: 1.7; }
+.onboarding-steps { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
+.onboarding-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: all var(--transition); }
+.onboarding-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+
+/* ========== TOGGLE SWITCH ========== */
+.toggle-switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--muted); border-radius: 14px;
+  cursor: pointer; transition: background var(--transition);
+}
+.toggle-slider::before {
+  content: ''; position: absolute; width: 22px; height: 22px; left: 3px; bottom: 3px;
+  background: white; border-radius: 50%; transition: transform var(--transition);
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ========== FORM GROUPS ========== */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-weight: 600; font-size: 0.85rem; color: var(--muted); letter-spacing: 0.01em; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.emotion-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ========== SHIMMER / LOADING ========== */
+.shimmer {
+  background: linear-gradient(90deg, rgba(159,234,232,0.06) 25%, rgba(159,234,232,0.14) 50%, rgba(159,234,232,0.06) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s ease infinite; border-radius: var(--radius-sm);
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-line { height: 14px; margin-bottom: 8px; border-radius: 4px; }
+.skeleton-line.w60 { width: 60%; } .skeleton-line.w80 { width: 80%; } .skeleton-line.w40 { width: 40%; }
+.skeleton-card { padding: 20px; border-radius: var(--radius); margin-bottom: 10px; }
+
+/* ========== LUCID DREAM GLOW ========== */
+.dream-entry-card.is-lucid {
+  border-color: rgba(159,234,232,0.5);
+  box-shadow: 0 0 20px rgba(159,234,232,0.12), var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+}
+.dream-entry-card.is-lucid::after {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(135deg, rgba(159,234,232,0.08) 0%, transparent 50%, rgba(159,234,232,0.04) 100%);
+  animation: lucidShimmer 3s ease-in-out infinite;
+}
+@keyframes lucidShimmer {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.lucid-star-marker {
+  color: var(--accent); font-size: 0.7rem; margin-left: 2px;
+  animation: lucidPulse 2.5s ease-in-out infinite;
+}
+@keyframes lucidPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* ========== DASHBOARD ========== */
+.dash-greeting { margin-bottom: 4px; font-size: 1.05rem; color: var(--muted); font-weight: 400; }
+.dash-time { font-family: 'Lora', serif; font-size: 2.2rem; margin-bottom: 4px; letter-spacing: -0.01em; }
+.dash-quick-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
+.dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
+.stat-card { position: relative; overflow: hidden; padding: 20px; }
+.stat-card .stat-value { font-family: 'Lora', serif; font-size: 1.9rem; color: var(--accent); line-height: 1.1; }
+.stat-card .stat-label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+.stat-card .stat-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); opacity: 0.12; }
+
+/* Moon + Streak Banner */
+.moon-streak-banner {
+  display: flex; align-items: center; gap: 16px; padding: 20px 24px;
+  background: var(--mist); border: 1px solid var(--card-border);
+  border-radius: var(--radius); margin-bottom: 28px; position: relative; overflow: hidden;
+}
+.moon-streak-banner .moon-visual { flex-shrink: 0; }
+.moon-streak-banner .banner-text { flex: 1; }
+.moon-streak-banner .moon-name { font-family: 'Lora', serif; font-size: 1.1rem; color: var(--text); margin-bottom: 2px; }
+.moon-streak-banner .streak-row { display: flex; align-items: center; gap: 8px; }
+.moon-streak-banner .streak-count { font-family: 'Lora', serif; font-size: 1.6rem; color: var(--gold); line-height: 1; }
+.moon-streak-banner .streak-count.no-streak { color: var(--muted); }
+.moon-streak-banner .streak-label { font-size: 0.82rem; color: var(--muted); }
+.moon-streak-banner .streak-fire { color: var(--gold); font-size: 1.3rem; animation: fireGlow 2s ease-in-out infinite; }
+@keyframes fireGlow { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+.moon-streak-banner .streak-broken { opacity: 0.5; }
+
+/* Lucid Summary */
+.lucid-summary {
+  font-size: 0.88rem; color: var(--muted); margin-bottom: 24px;
+  padding: 10px 16px; background: var(--mist); border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+}
+.lucid-summary strong { color: var(--accent); }
+
+/* Dream Sign Chips */
+.dream-signs-section { margin-bottom: 28px; }
+.dream-signs-section h3 { font-size: 1rem; margin-bottom: 10px; color: var(--text); }
+.dream-sign-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.dream-sign-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+  border: 1px solid var(--card-border); cursor: pointer;
+  transition: all var(--transition); background: var(--card-bg);
+}
+.dream-sign-chip:hover { border-color: var(--accent); color: var(--accent); }
+.dream-sign-chip .sign-star { color: var(--accent); font-size: 0.65rem; }
+
+/* ========== DREAM JOURNAL ========== */
+.journal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.search-box { position: relative; flex: 1; max-width: 360px; min-width: 200px; }
+.search-box input { padding-left: 40px; }
+.search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 18px; height: 18px; }
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+.dream-list { display: flex; flex-direction: column; gap: 10px; }
+.dream-entry-card {
+  display: flex; gap: 14px; padding: 14px 16px; cursor: pointer;
+  border: 1px solid var(--card-border); border-radius: var(--radius);
+  background: var(--card-bg); box-shadow: var(--card-shadow);
+  transition: border-color var(--transition);
+}
+.dream-entry-card:hover { border-color: rgba(159,234,232,0.45); }
+.dream-entry-card .dream-thumb {
+  width: 80px; height: 48px; flex-shrink: 0; border-radius: 8px; overflow: hidden;
+  background: linear-gradient(135deg, var(--surface), rgba(159,234,232,0.1));
+  position: relative;
+}
+.dream-entry-card .dream-thumb img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.dream-entry-card .dream-thumb .thumb-shimmer { width: 100%; height: 100%; }
+.dream-entry-card .dream-body { flex: 1; min-width: 0; }
+.dream-entry-card .dream-title { font-family: 'Lora', serif; font-weight: 600; margin-bottom: 3px; font-size: 1.02rem; display: flex; align-items: center; gap: 6px; }
+.dream-entry-card .dream-preview { color: var(--muted); font-size: 0.84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.dream-entry-card .dream-bottom { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.dream-lucidity { display: flex; gap: 1px; }
+.dream-lucidity .l-star { color: var(--accent); font-size: 0.72rem; }
+.dream-lucidity .l-star.dim { opacity: 0.2; }
+
+/* Dream detail banner */
+.dream-banner {
+  width: 100%; max-height: 200px; object-fit: cover; border-radius: var(--radius-sm);
+  margin-bottom: 16px; display: block;
+}
+.dream-banner-shimmer { width: 100%; height: 160px; border-radius: var(--radius-sm); margin-bottom: 16px; }
+.dream-banner-fallback {
+  width: 100%; height: 120px; border-radius: var(--radius-sm); margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--surface), rgba(159,234,232,0.12));
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ========== REALITY CHECKS ========== */
+.rc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.rc-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 28px 20px; }
+.rc-card .rc-illustration { width: 100px; height: 100px; margin-bottom: 14px; color: var(--accent); }
+.rc-card .rc-illustration svg { width: 100%; height: 100%; }
+.rc-card h3 { margin-bottom: 8px; }
+.rc-card p { color: var(--muted); font-size: 0.88rem; margin-bottom: 18px; line-height: 1.6; }
+.rc-reminder { margin-top: 32px; }
+.rc-reminder .reminder-times { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+.rc-reminder .reminder-times input { max-width: 120px; }
+
+/* ========== TECHNIQUE LIBRARY ========== */
+.tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.tech-card { padding: 24px; position: relative; }
+.tech-card .tech-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; padding-right: 32px; }
+.tech-card .diff-dots { display: flex; gap: 4px; align-items: center; }
+.tech-card .diff-dots span { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--accent); }
+.tech-card .diff-dots span.filled { background: var(--accent); }
+.tech-card .tech-desc { color: var(--muted); font-size: 0.88rem; margin-bottom: 14px; line-height: 1.65; }
+.tech-accordion { margin-top: 14px; display: flex; flex-direction: column; }
+.tech-tip { margin-top: 14px; padding: 12px 14px; background: var(--accent-dim); border-radius: var(--radius-xs); font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+.tech-tip strong { color: var(--accent); }
+.tech-bookmark-btn { position: absolute; top: 16px; right: 16px; }
+
+/* ========== SLEEP SCHEDULE ========== */
+.sleep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.rem-timeline { margin-top: 24px; }
+.rem-timeline svg { width: 100%; height: auto; }
+.rem-legend { display: flex; gap: 16px; margin-top: 12px; font-size: 0.8rem; color: var(--muted); flex-wrap: wrap; }
+.rem-legend span { display: flex; align-items: center; gap: 6px; }
+.rem-legend .dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+/* ========== EVENING RITUAL ========== */
+.ritual-container {
+  max-width: 560px; margin: 0 auto;
+}
+.ritual-step {
+  padding: 32px 28px; margin-bottom: 16px; position: relative; overflow: hidden;
+}
+.ritual-step .step-num {
+  font-family: 'Lora', serif; font-size: 0.75rem; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+}
+.ritual-mist-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(159,234,232,0.04), transparent);
+  animation: mistPulse 4s ease-in-out infinite;
+}
+@keyframes mistPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.ritual-intention-input {
+  font-family: 'Lora', serif; font-size: 1.1rem; text-align: center;
+  background: var(--input-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm); padding: 16px 20px; width: 100%;
+  color: var(--text); line-height: 1.6;
+}
+.ritual-intention-input:focus { border-color: var(--accent); }
+.wbtb-info {
+  padding: 12px 16px; background: var(--accent-dim); border-radius: var(--radius-xs);
+  font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-top: 12px;
+}
+.wbtb-info strong { color: var(--accent); }
+
+/* ========== CONSTELLATION VIEW ========== */
+.constellation-container { position: relative; width: 100%; }
+.constellation-svg { width: 100%; height: auto; min-height: 400px; }
+.constellation-tooltip {
+  position: absolute; background: var(--surface); border: 1px solid var(--card-border);
+  border-radius: var(--radius-xs); padding: 8px 14px; font-size: 0.82rem;
+  color: var(--text); pointer-events: none; z-index: 10; box-shadow: var(--card-shadow);
+  white-space: nowrap; display: none;
+}
+
+/* ========== ACHIEVEMENT MODAL ========== */
+.achievement-modal {
+  position: fixed; inset: 0; z-index: 250; background: var(--overlay);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px); animation: fadeIn 0.4s ease;
+}
+.achievement-card {
+  background: var(--surface); border: 2px solid var(--gold);
+  border-radius: var(--radius); padding: 48px 36px; max-width: 400px;
+  width: 90%; text-align: center; box-shadow: 0 0 60px rgba(245,217,122,0.15);
+  animation: achievePop 0.5s ease;
+}
+@keyframes achievePop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.achievement-card .achieve-icon { font-size: 3rem; margin-bottom: 16px; color: var(--gold); }
+.achievement-card h2 { color: var(--gold); margin-bottom: 8px; }
+.achievement-card p { color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+
+/* Badge shelf */
+.badge-shelf { display: flex; flex-wrap: wrap; gap: 12px; }
+.badge-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border); background: var(--card-bg);
+  width: 90px; text-align: center; transition: all var(--transition);
+}
+.badge-item.unlocked { border-color: rgba(245,217,122,0.4); background: rgba(245,217,122,0.06); }
+.badge-item.locked { opacity: 0.35; }
+.badge-item .badge-icon { font-size: 1.6rem; }
+.badge-item .badge-name { font-size: 0.68rem; color: var(--muted); font-weight: 600; line-height: 1.3; }
+.badge-item.unlocked .badge-name { color: var(--gold); }
+
+/* ========== SETTINGS ========== */
+.settings-card { padding: 24px; margin-bottom: 16px; }
+.settings-card:last-of-type { margin-bottom: 0; }
+.settings-card h3 { margin-bottom: 16px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--card-border); gap: 16px; }
+.settings-row:last-child { border-bottom: none; }
+.settings-row .settings-label { font-weight: 600; font-size: 0.93rem; }
+.settings-row .settings-desc { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+
+/* Install banner */
+.install-banner {
+  background: var(--accent-dim); border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px; font-size: 0.88rem;
+}
+.install-banner a { text-decoration: underline; }
+
+/* RC Notification Setup */
+.rc-setup-section { margin-top: 12px; }
+.rc-technique-option {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+  cursor: pointer; transition: all var(--transition); margin-bottom: 8px;
+}
+.rc-technique-option:hover { border-color: var(--accent); }
+.rc-technique-option.selected { border-color: var(--accent); background: var(--accent-dim); }
+.rc-technique-option .rc-radio {
+  width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--muted);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all var(--transition);
+}
+.rc-technique-option.selected .rc-radio { border-color: var(--accent); }
+.rc-technique-option.selected .rc-radio::after {
+  content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+}
+.rc-freq-option {
+  display: inline-flex; align-items: center; padding: 8px 16px;
+  border: 1px solid var(--card-border); border-radius: 20px;
+  cursor: pointer; transition: all var(--transition); font-size: 0.85rem; font-weight: 500;
+  margin-right: 8px; margin-bottom: 8px;
+}
+.rc-freq-option:hover { border-color: var(--accent); }
+.rc-freq-option.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+
+/* In-app RC notification banner */
+.rc-notification-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 280;
+  background: var(--surface); border-bottom: 2px solid var(--accent);
+  padding: 16px 20px; display: flex; align-items: center; gap: 14px;
+  animation: slideDown 0.4s ease; box-shadow: 0 4px 24px rgba(159,234,232,0.2);
+}
+@keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+.rc-notification-banner .rc-notif-text { flex: 1; }
+.rc-notification-banner .rc-notif-text strong { color: var(--accent); }
+.rc-notification-banner .rc-notif-sub { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main-content { margin-left: 0; padding: 20px 16px 100px; }
+  .bottom-nav { display: flex; }
+  .sleep-grid { grid-template-columns: 1fr; }
+  .dash-stats { grid-template-columns: 1fr 1fr; }
+  .rc-grid, .tech-grid { grid-template-columns: 1fr; }
+  .modal { padding: 22px 18px; }
+  .onboarding-card { padding: 32px 22px; }
+  .form-row { grid-template-columns: 1fr; }
+  .moon-streak-banner { flex-direction: column; text-align: center; gap: 12px; }
+  .achievement-card { padding: 32px 22px; }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar { width: 68px; }
+  .sidebar-logo span, .sidebar-nav a span { display: none; }
+  .sidebar-nav a { justify-content: center; padding: 12px; }
+  .main-content { margin-left: 68px; }
+}
+@media (min-width: 1025px) { .bottom-nav { display: none; } }
+
+/* ========== REDUCED MOTION ========== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+.text-center { text-align: center; }
+.text-muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="atmos-bg"></div>
+<div class="star-field" id="starField"></div>
+<div class="toast-container" id="toastContainer"></div>
+<div id="onboardingOverlay" style="display:none;"></div>
+<div id="rcNotifBanner" style="display:none;"></div>
+<div class="app-shell">
+  <nav class="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-logo">
+      <svg class="logo-moon" viewBox="0 0 36 36" fill="none">
+        <path d="M18 2C10 2 3.5 8 2.5 16c1.5-3 4.5-5 8-5 5 0 9 4 9 9s-4 9-9 9c-3.5 0-6.5-2-8-5 1 8 7.5 14 15.5 14C27 38 34 30 34 20S27 2 18 2z" fill="var(--accent)" opacity="0.8"/>
+        <circle cx="14" cy="12" r="1" fill="var(--accent)" opacity="0.4"/><circle cx="24" cy="18" r="0.8" fill="var(--accent)" opacity="0.3"/>
+      </svg>
+      <span>LucidLog</span>
+    </div>
+    <div class="sidebar-nav">
+      <a href="#" data-page="dashboard" class="active" aria-label="Dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="#" data-page="journal" aria-label="Dream Journal"><i data-lucide="book-open"></i><span>Dream Journal</span></a>
+      <a href="#" data-page="reality-check" aria-label="Reality Checks"><i data-lucide="scan-eye"></i><span>Reality Checks</span></a>
+      <a href="#" data-page="library" aria-label="Technique Library"><i data-lucide="library"></i><span>Technique Library</span></a>
+      <a href="#" data-page="sleep" aria-label="Sleep Schedule"><i data-lucide="moon"></i><span>Sleep Schedule</span></a>
+      <a href="#" data-page="constellation" aria-label="Constellation"><i data-lucide="sparkles"></i><span>Constellation</span></a>
+      <a href="#" data-page="ritual" aria-label="Evening Ritual"><i data-lucide="sunset"></i><span>Ritual</span></a>
+      <a href="#" data-page="settings" aria-label="Settings"><i data-lucide="settings"></i><span>Settings</span></a>
+    </div>
+    <div class="sidebar-footer"><div style="font-size:0.72rem;color:var(--muted);text-align:center;">v3.0</div></div>
+  </nav>
+  <main class="main-content" id="mainContent" role="main"></main>
+</div>
+<nav class="bottom-nav" role="navigation" aria-label="Mobile navigation">
+  <a href="#" data-page="dashboard" class="active" aria-label="Dashboard"><i data-lucide="layout-dashboard"></i>Home</a>
+  <a href="#" data-page="journal" aria-label="Journal"><i data-lucide="book-open"></i>Journal</a>
+  <a href="#" data-page="ritual" aria-label="Ritual"><i data-lucide="sunset"></i>Ritual</a>
+  <a href="#" data-page="constellation" aria-label="Stars"><i data-lucide="sparkles"></i>Stars</a>
+  <a href="#" data-page="settings" aria-label="Settings"><i data-lucide="settings"></i>Settings</a>
+</nav>
+
+<script>
+/* ==========================================================================
+   LUCIDLOG — APPLICATION LOGIC (v3: Engagement + Lucidity + Constellation)
+   ========================================================================== */
+
+// ==================== IndexedDB SETUP ====================
+const DB_NAME = 'lucidlog-db';
+const DB_VERSION = 2;
+let db = null;
+
+async function openDB() {
+  if (db) return db;
+  db = await idb.openDB(DB_NAME, DB_VERSION, {
+    upgrade(database, oldVersion) {
+      if (!database.objectStoreNames.contains('dreams')) {
+        const ds = database.createObjectStore('dreams', { keyPath: 'id' });
+        ds.createIndex('date', 'date');
+        ds.createIndex('lucidityLevel', 'lucidityLevel');
+      }
+      if (!database.objectStoreNames.contains('settings'))
+        database.createObjectStore('settings', { keyPath: 'key' });
+      if (!database.objectStoreNames.contains('bookmarks'))
+        database.createObjectStore('bookmarks', { keyPath: 'techniqueId' });
+      if (!database.objectStoreNames.contains('dream_images'))
+        database.createObjectStore('dream_images', { keyPath: 'dreamId' });
+      if (!database.objectStoreNames.contains('achievements'))
+        database.createObjectStore('achievements', { keyPath: 'id' });
+      if (!database.objectStoreNames.contains('intentions'))
+        database.createObjectStore('intentions', { keyPath: 'date' });
+    }
+  });
+  return db;
+}
+
+// ==================== DATA ACCESS LAYER ====================
+async function getAllDreams() {
+  try { return await (await openDB()).getAll('dreams'); } catch { return []; }
+}
+async function getDream(id) {
+  try { return await (await openDB()).get('dreams', id); } catch { return null; }
+}
+async function putDream(dream) {
+  try { await (await openDB()).put('dreams', dream); } catch(e) { console.error('putDream', e); }
+}
+async function deleteDreamFromDB(id) {
+  try { await (await openDB()).delete('dreams', id); } catch(e) { console.error('deleteDream', e); }
+}
+async function getSetting(key, defaultVal) {
+  try { const r = await (await openDB()).get('settings', key); return r ? r.value : defaultVal; } catch { return defaultVal; }
+}
+async function putSetting(key, value) {
+  try { await (await openDB()).put('settings', { key, value }); } catch(e) { console.error('putSetting', e); }
+}
+async function getAllBookmarks() {
+  try { return (await (await openDB()).getAll('bookmarks')).map(b => b.techniqueId); } catch { return []; }
+}
+async function putBookmark(techniqueId) {
+  try { await (await openDB()).put('bookmarks', { techniqueId }); } catch(e) { console.error('putBookmark', e); }
+}
+async function removeBookmark(techniqueId) {
+  try { await (await openDB()).delete('bookmarks', techniqueId); } catch(e) { console.error('removeBookmark', e); }
+}
+async function getDreamImage(dreamId) {
+  try { return await (await openDB()).get('dream_images', dreamId); } catch { return null; }
+}
+async function putDreamImage(dreamId, url) {
+  try { await (await openDB()).put('dream_images', { dreamId, url, generatedAt: Date.now() }); } catch(e) { console.error('putDreamImage', e); }
+}
+async function deleteDreamImage(dreamId) {
+  try { await (await openDB()).delete('dream_images', dreamId); } catch(e) { console.error('deleteDreamImage', e); }
+}
+async function getAllAchievements() {
+  try { return await (await openDB()).getAll('achievements'); } catch { return []; }
+}
+async function putAchievement(ach) {
+  try { await (await openDB()).put('achievements', ach); } catch(e) { console.error('putAchievement', e); }
+}
+async function getIntention(date) {
+  try { return await (await openDB()).get('intentions', date); } catch { return null; }
+}
+async function putIntention(rec) {
+  try { await (await openDB()).put('intentions', rec); } catch(e) { console.error('putIntention', e); }
+}
+
+// ==================== MIGRATION (localStorage → IndexedDB) ====================
+async function migrateFromLocalStorage() {
+  const migrated = await getSetting('migrated', false);
+  if (migrated) return;
+  const OLD_KEY = 'lucid_app_state';
+  try {
+    const raw = localStorage.getItem(OLD_KEY);
+    if (!raw) { await putSetting('migrated', true); return; }
+    const old = JSON.parse(raw);
+    const d = await openDB();
+    const tx = d.transaction(['dreams', 'settings', 'bookmarks'], 'readwrite');
+    if (old.dreams && Array.isArray(old.dreams)) {
+      for (const dream of old.dreams) {
+        const mapped = { ...dream, lucidityLevel: dream.lucidity, isLucid: (dream.lucidity||0)>=3 };
+        tx.objectStore('dreams').put(mapped);
+      }
+    }
+    if (old.bookmarks && Array.isArray(old.bookmarks)) {
+      for (const tid of old.bookmarks) tx.objectStore('bookmarks').put({ techniqueId: tid });
+    }
+    if (old.onboardingComplete) tx.objectStore('settings').put({ key: 'onboardingComplete', value: true });
+    if (old.sleepSchedule) tx.objectStore('settings').put({ key: 'sleepSchedule', value: old.sleepSchedule });
+    if (old.rcReminders) tx.objectStore('settings').put({ key: 'rcReminders', value: old.rcReminders });
+    if (old.notifications) tx.objectStore('settings').put({ key: 'notifications', value: old.notifications });
+    tx.objectStore('settings').put({ key: 'imageGen', value: true });
+    tx.objectStore('settings').put({ key: 'migrated', value: true });
+    await tx.done;
+    localStorage.removeItem(OLD_KEY);
+    showToast('Data migrated to new storage');
+  } catch(e) {
+    console.error('Migration failed', e);
+    await putSetting('migrated', true);
+  }
+}
+
+// ==================== IN-MEMORY CACHE ====================
+let dreamsCache = [];
+let bookmarksCache = [];
+let currentPage = 'dashboard';
+let currentJournalFilter = 'all';
+let currentJournalSearch = '';
+
+async function refreshCache() {
+  dreamsCache = await getAllDreams();
+  bookmarksCache = await getAllBookmarks();
+}
+
+// ==================== STAR FIELD ====================
+function createStarField() {
+  const c = document.getElementById('starField');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div'); s.className = 'star';
+    s.style.left = Math.random()*100+'%'; s.style.top = Math.random()*100+'%';
+    s.style.animationDelay = (Math.random()*4)+'s'; s.style.animationDuration = (3+Math.random()*3)+'s';
+    if (Math.random()>0.7) { s.style.width='3px'; s.style.height='3px'; }
+    c.appendChild(s);
+  }
+}
+
+// ==================== TOAST ====================
+function showToast(message, icon='check-circle') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div'); t.className='toast';
+  t.innerHTML=`<i data-lucide="${icon}" style="width:18px;height:18px;color:var(--accent);flex-shrink:0;"></i><span>${message}</span>`;
+  c.appendChild(t); lucide.createIcons({nodes:[t]});
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(40px)';t.style.transition='all 0.3s ease';setTimeout(()=>t.remove(),300);},3000);
+}
+
+// ==================== MOON PHASE ====================
+function getMoonPhase() {
+  const knownNew=new Date(2000,0,6,18,14), syn=29.53058867;
+  const diff=(Date.now()-knownNew.getTime())/(1000*60*60*24);
+  const frac=((diff%syn)+syn)%syn/syn;
+  let n;
+  if(frac<0.0625)n='New Moon';else if(frac<0.1875)n='Waxing Crescent';else if(frac<0.3125)n='First Quarter';
+  else if(frac<0.4375)n='Waxing Gibbous';else if(frac<0.5625)n='Full Moon';else if(frac<0.6875)n='Waning Gibbous';
+  else if(frac<0.8125)n='Last Quarter';else if(frac<0.9375)n='Waning Crescent';else n='New Moon';
+  return {name:n,fraction:frac};
+}
+function moonPhaseSVG(sz=48) {
+  const m=getMoonPhase(),f=m.fraction; let p;
+  if(f<=0.5){const r=Math.abs(f-0.25)/0.25;p=`<circle cx="24" cy="24" r="18" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"/><path d="M24 6 A18 18 0 1 1 24 42 A${18*Math.max(0.05,r)} 18 0 1 ${f<0.25?'0':'1'} 24 6Z" fill="var(--accent)" opacity="0.5"/>`;}
+  else{const r=Math.abs(f-0.75)/0.25;p=`<circle cx="24" cy="24" r="18" fill="var(--accent)" opacity="0.3"/><path d="M24 6 A18 18 0 1 0 24 42 A${18*Math.max(0.05,r)} 18 0 1 ${f>0.75?'0':'1'} 24 6Z" fill="var(--bg)" opacity="0.6"/>`;}
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 48 48">${p}</svg>`;
+}
+
+// Moon with crack for broken streak
+function moonPhaseCrackedSVG(sz=48) {
+  const m=getMoonPhase(),f=m.fraction; let p;
+  if(f<=0.5){const r=Math.abs(f-0.25)/0.25;p=`<circle cx="24" cy="24" r="18" fill="none" stroke="var(--muted)" stroke-width="1.5" opacity="0.3"/><path d="M24 6 A18 18 0 1 1 24 42 A${18*Math.max(0.05,r)} 18 0 1 ${f<0.25?'0':'1'} 24 6Z" fill="var(--muted)" opacity="0.3"/>`;}
+  else{const r=Math.abs(f-0.75)/0.25;p=`<circle cx="24" cy="24" r="18" fill="var(--muted)" opacity="0.2"/><path d="M24 6 A18 18 0 1 0 24 42 A${18*Math.max(0.05,r)} 18 0 1 ${f>0.75?'0':'1'} 24 6Z" fill="var(--bg)" opacity="0.4"/>`;}
+  // Add crack line
+  p += `<line x1="24" y1="14" x2="22" y2="24" stroke="var(--muted)" stroke-width="1" opacity="0.6"><animate attributeName="opacity" values="0;0.6;0.6" dur="0.4s" fill="freeze"/></line><line x1="22" y1="24" x2="26" y2="34" stroke="var(--muted)" stroke-width="1" opacity="0.6"><animate attributeName="opacity" values="0;0.6;0.6" dur="0.4s" fill="freeze"/></line>`;
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 48 48">${p}</svg>`;
+}
+
+function isFullMoon() {
+  const m = getMoonPhase();
+  return m.name === 'Full Moon';
+}
+
+// ==================== STREAK ====================
+function calculateStreak() {
+  if(!dreamsCache.length) return 0;
+  const dates=[...new Set(dreamsCache.map(d=>d.date))].sort().reverse();
+  const today=new Date().toISOString().split('T')[0];
+  const yest=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  if(dates[0]!==today&&dates[0]!==yest) return 0;
+  let s=1; for(let i=1;i<dates.length;i++){if((new Date(dates[i-1])-new Date(dates[i]))/86400000===1)s++;else break;} return s;
+}
+
+// ==================== LUCID SUMMARY ====================
+function getLucidSummary() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const thisMonth = dreamsCache.filter(d => d.date >= monthStart);
+  const lucidThisMonth = thisMonth.filter(d => d.isLucid).length;
+  const totalThisMonth = thisMonth.length;
+  return { lucid: lucidThisMonth, total: totalThisMonth };
+}
+
+// ==================== DREAM SIGN DETECTION ====================
+const STOP_WORDS = new Set([
+  'i','me','my','myself','we','our','ours','ourselves','you','your','yours',
+  'yourself','yourselves','he','him','his','himself','she','her','hers',
+  'herself','it','its','itself','they','them','their','theirs','themselves',
+  'what','which','who','whom','this','that','these','those','am','is','are',
+  'was','were','be','been','being','have','has','had','having','do','does',
+  'did','doing','a','an','the','and','but','if','or','because','as','until',
+  'while','of','at','by','for','with','about','against','between','through',
+  'during','before','after','above','below','to','from','up','down','in',
+  'out','on','off','over','under','again','further','then','once','here',
+  'there','when','where','why','how','all','both','each','few','more','most',
+  'other','some','such','no','nor','not','only','own','same','so','than',
+  'too','very','s','t','can','will','just','don','should','now','also',
+  'could','would','much','many','like','back','still','even','well','way',
+  'really','thing','things','got','get','got','went','go','come','came',
+  'see','saw','look','looked','know','knew','think','thought','feel','felt',
+  'make','made','take','took','say','said','tell','told','find','found',
+  'give','gave','keep','kept','let','put','seem','seemed','try','tried',
+  'ask','asked','want','wanted','need','needed','one','two','first','last',
+  'long','great','little','right','old','big','high','different','small',
+  'large','next','early','young','important','another','every','around',
+  'into','could','quite','rather','already','always','never','sometimes',
+  'something','someone','anything','anyone','nothing','nobody','everything',
+  'everyone','somewhere','anywhere','nowhere','everywhere'
+]);
+
+function extractDreamSigns(dreams, topN=5) {
+  const freq = {};
+  const lucidWords = new Set();
+  for (const d of dreams) {
+    if (!d.narrative) continue;
+    const words = d.narrative.toLowerCase().replace(/[^a-z\s'-]/g, '').split(/\s+/);
+    const uniqueInDream = new Set();
+    for (const w of words) {
+      if (w.length < 3 || STOP_WORDS.has(w)) continue;
+      uniqueInDream.add(w);
+      freq[w] = (freq[w]||0) + 1;
+    }
+    if (d.isLucid) {
+      for (const w of uniqueInDream) lucidWords.add(w);
+    }
+  }
+  const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, topN * 3);
+  // Filter to likely nouns (heuristic: words that appear in 2+ dreams, skip very short)
+  const candidates = sorted.filter(([w,c]) => c >= 2).slice(0, topN);
+  return candidates.map(([word, count]) => ({
+    word,
+    count,
+    isLucidSign: lucidWords.has(word)
+  }));
+}
+
+// ==================== ROUTER ====================
+function navigate(page) {
+  currentPage=page;
+  document.querySelectorAll('.sidebar-nav a,.bottom-nav a').forEach(a=>a.classList.toggle('active',a.dataset.page===page));
+  renderPage(page); window.scrollTo(0,0);
+}
+document.addEventListener('click',e=>{const l=e.target.closest('[data-page]');if(l){e.preventDefault();navigate(l.dataset.page);}});
+
+// ==================== ESCAPE HTML ====================
+function escapeHtml(t){const d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
+
+// ==================== IMAGE PROMPT BUILDER ====================
+function buildImagePrompt(dream) {
+  const level = dream.lucidityLevel || 0;
+  const type = level>=4?'fully lucid dream':level>=2?'semi-lucid dream':'vivid dream';
+  const mood = (dream.emotions && dream.emotions.length) ? dream.emotions.join(', ') : 'mysterious, ethereal';
+  const scene = (dream.narrative||'').slice(0,120);
+  return [
+    '2-panel comic strip, watercolour and ink illustration,',
+    `depicting a ${type} titled "${dream.title}".`,
+    `Mood: ${mood}. Scene: ${scene}.`,
+    'Teal and midnight navy colour palette. Surreal, ethereal.',
+    'Field guide illustration aesthetic. No text. No speech bubbles.'
+  ].join(' ');
+}
+
+// Update image in DOM after generation or IDB lookup
+function updateImageInDOM(dreamId, url) {
+  window.__dreamImageCache = window.__dreamImageCache || {};
+  window.__dreamImageCache[dreamId] = url;
+  const thumb = document.querySelector(`[data-thumb="${dreamId}"]`);
+  if (thumb) thumb.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+  const banner = document.querySelector(`[data-banner="${dreamId}"]`);
+  if (banner) banner.innerHTML = `<img class="dream-banner" src="${url}" alt="Dream illustration" loading="lazy">`;
+}
+
+function showImageFallbackInDOM(dreamId) {
+  const thumb = document.querySelector(`[data-thumb="${dreamId}"]`);
+  if (thumb) thumb.innerHTML = `<div class="thumb-fallback">${moonPhaseSVG(28)}</div>`;
+  const banner = document.querySelector(`[data-banner="${dreamId}"]`);
+  if (banner) banner.innerHTML = `<div class="dream-banner-fallback">${moonPhaseSVG(48)}</div>`;
+}
+
+// Image generation with retry and DOM update
+async function triggerImageGeneration(dreamId, retryCount=0) {
+  const imageGenOn = await getSetting('imageGen', true);
+  if (!imageGenOn) return;
+  if (!navigator.onLine) {
+    const d2 = await getDream(dreamId);
+    if(d2) await putDream({...d2, imagePending:true});
+    showImageFallbackInDOM(dreamId);
+    return;
+  }
+  const existing = await getDreamImage(dreamId);
+  if (existing && existing.url) {
+    updateImageInDOM(dreamId, existing.url);
+    return;
+  }
+  const dream = await getDream(dreamId);
+  if (!dream) return;
+  const prompt = buildImagePrompt(dream);
+  const seed = String(dreamId) + (retryCount > 0 ? '-retry' + retryCount : '');
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=384&nologo=true&seed=${encodeURIComponent(seed)}`;
+  const img = new Image();
+  let settled = false;
+  const timer = setTimeout(() => {
+    if (settled) return;
+    settled = true;
+    img.src = '';
+    console.warn('LucidLog: image generation timed out for', dreamId, '(retry', retryCount, ')');
+    if (retryCount < 1) {
+      triggerImageGeneration(dreamId, retryCount + 1);
+    } else {
+      showImageFallbackInDOM(dreamId);
+    }
+  }, 120000);
+  img.onload = async () => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    await putDreamImage(dreamId, url);
+    updateImageInDOM(dreamId, url);
+  };
+  img.onerror = () => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    console.warn('LucidLog: image generation failed for', dreamId, '(retry', retryCount, ')');
+    if (retryCount < 1) {
+      setTimeout(() => triggerImageGeneration(dreamId, retryCount + 1), 2000);
+    } else {
+      showImageFallbackInDOM(dreamId);
+    }
+  };
+  img.src = url;
+}
+
+// Retry pending images on app open
+async function retryPendingImages() {
+  const dreams = await getAllDreams();
+  // Also populate cache for all existing images
+  window.__dreamImageCache = window.__dreamImageCache || {};
+  for (const d of dreams) {
+    const rec = await getDreamImage(d.id);
+    if (rec && rec.url) {
+      window.__dreamImageCache[d.id] = rec.url;
+    }
+  }
+  // Retry pending
+  for (const d of dreams) {
+    if (d.imagePending && navigator.onLine) {
+      await putDream({...d, imagePending: false});
+      triggerImageGeneration(d.id);
+    }
+  }
+}
+
+// Render thumbnail for dream list card (checks IDB async later if not cached)
+function renderThumb(dreamId) {
+  const cached = window.__dreamImageCache && window.__dreamImageCache[dreamId];
+  if (cached) {
+    return `<img src="${cached}" alt="" loading="lazy">`;
+  }
+  return `<div class="thumb-shimmer shimmer"></div>`;
+}
+
+// Render banner for detail view
+function renderBanner(dreamId) {
+  const cached = window.__dreamImageCache && window.__dreamImageCache[dreamId];
+  if (cached) {
+    return `<img class="dream-banner" src="${cached}" alt="Dream illustration" loading="lazy">`;
+  }
+  return `<div class="dream-banner-shimmer shimmer"></div>`;
+}
+
+// Async image loader
+async function loadImagesIntoDOM(dreamIds, container) {
+  window.__dreamImageCache = window.__dreamImageCache || {};
+  for (const id of dreamIds) {
+    const rec = await getDreamImage(id);
+    if (rec && rec.url) {
+      window.__dreamImageCache[id] = rec.url;
+    }
+  }
+  if (!container) container = document;
+  for (const id of dreamIds) {
+    const url = window.__dreamImageCache[id];
+    if (!url) continue;
+    const thumb = container.querySelector(`[data-thumb="${id}"]`);
+    if (thumb) thumb.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+    const banner = container.querySelector(`[data-banner="${id}"]`);
+    if (banner) banner.innerHTML = `<img class="dream-banner" src="${url}" alt="Dream illustration" loading="lazy">`;
+  }
+}
+
+// ==================== SKELETON LOADER ====================
+function renderSkeleton() {
+  return `<div class="page"><div class="shimmer skeleton-card"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div><div class="shimmer skeleton-card"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>`;
+}
+
+// ==================== ACHIEVEMENT SYSTEM ====================
+const ACHIEVEMENTS_DEF = [
+  { id: 'first_dream', name: 'First Dream', icon: '\u2728', desc: 'Log your first dream' },
+  { id: 'first_lucid', name: 'First Lucid Dream', icon: '\u2B50', desc: 'Mark a dream as lucid' },
+  { id: 'streak_7', name: '7-Day Streak', icon: '\uD83D\uDD25', desc: 'Log dreams for 7 consecutive days' },
+  { id: 'streak_30', name: '30-Day Streak', icon: '\uD83C\uDF1F', desc: 'Log dreams for 30 consecutive days' },
+  { id: 'lucid_10', name: '10 Lucid Dreams', icon: '\uD83D\uDC41', desc: 'Achieve 10 lucid dreams' },
+  { id: 'dream_archaeologist', name: 'Dream Archaeologist', icon: '\uD83D\uDCDA', desc: 'Log 50 dreams' },
+  { id: 'full_moon_logger', name: 'Full Moon Logger', icon: '\uD83C\uDF19', desc: 'Log a dream within 24h of a full moon' },
+];
+
+let achievementDebounceTimer = null;
+
+async function checkAchievements() {
+  clearTimeout(achievementDebounceTimer);
+  achievementDebounceTimer = setTimeout(async () => {
+    const unlocked = (await getAllAchievements()).map(a => a.id);
+    const streak = calculateStreak();
+    const totalDreams = dreamsCache.length;
+    const lucidDreams = dreamsCache.filter(d => d.isLucid).length;
+    const checks = [
+      { id: 'first_dream', cond: totalDreams >= 1 },
+      { id: 'first_lucid', cond: lucidDreams >= 1 },
+      { id: 'streak_7', cond: streak >= 7 },
+      { id: 'streak_30', cond: streak >= 30 },
+      { id: 'lucid_10', cond: lucidDreams >= 10 },
+      { id: 'dream_archaeologist', cond: totalDreams >= 50 },
+      { id: 'full_moon_logger', cond: isFullMoon() && totalDreams > 0 },
+    ];
+    for (const check of checks) {
+      if (check.cond && !unlocked.includes(check.id)) {
+        const def = ACHIEVEMENTS_DEF.find(a => a.id === check.id);
+        if (def) {
+          await putAchievement({ id: def.id, unlockedAt: Date.now() });
+          showAchievementModal(def);
+        }
+      }
+    }
+  }, 300);
+}
+
+function showAchievementModal(def) {
+  const el = document.createElement('div');
+  el.className = 'achievement-modal';
+  el.innerHTML = `<div class="achievement-card">
+    <div class="achieve-icon">${def.icon}</div>
+    <h2>${def.name}</h2>
+    <p>${def.desc}</p>
+    <button class="btn btn-gold" onclick="this.closest('.achievement-modal').remove()">Celebrate</button>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if(e.target === el) el.remove(); });
+}
+
+// ==================== PAGE RENDERERS ====================
+async function renderPage(page) {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = renderSkeleton();
+  await refreshCache();
+  switch(page) {
+    case 'dashboard': main.innerHTML = renderDashboard(); break;
+    case 'journal': main.innerHTML = renderJournal(); break;
+    case 'reality-check': main.innerHTML = renderRealityCheck(); break;
+    case 'library': main.innerHTML = renderLibrary(); break;
+    case 'sleep': main.innerHTML = await renderSleep(); break;
+    case 'constellation': main.innerHTML = renderConstellation(); break;
+    case 'ritual': main.innerHTML = await renderRitual(); break;
+    case 'settings': main.innerHTML = await renderSettings(); break;
+  }
+  lucide.createIcons();
+  bindPageEvents(page);
+  const ids = dreamsCache.map(d=>d.id);
+  loadImagesIntoDOM(ids, main);
+}
+
+// ---- Dashboard ----
+function renderDashboard() {
+  const now=new Date(), hour=now.getHours();
+  const greeting=hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
+  const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const moon=getMoonPhase(), streak=calculateStreak();
+  const totalDreams=dreamsCache.length;
+  const lucidDreams=dreamsCache.filter(d=>d.isLucid).length;
+  const avgLucidity=totalDreams?(dreamsCache.reduce((s,d)=>s+(d.lucidityLevel||0),0)/totalDreams).toFixed(1):'0.0';
+  const summary = getLucidSummary();
+  const signs = extractDreamSigns(dreamsCache);
+  const streakActive = streak > 0;
+  const moonSvg = streakActive ? moonPhaseSVG(56) : moonPhaseCrackedSVG(56);
+
+  return `<div class="page">
+    <p class="dash-greeting">${greeting}, dreamer</p>
+    <h1 class="dash-time">${timeStr}</h1>
+
+    <div class="moon-streak-banner">
+      <div class="moon-visual">${moonSvg}</div>
+      <div class="banner-text">
+        <div class="moon-name">${moon.name}</div>
+        <div class="streak-row">
+          ${streakActive ? `<span class="streak-fire">&#9733;</span>` : ''}
+          <span class="streak-count ${streakActive?'':'no-streak'}">${streak}</span>
+          <span class="streak-label">day streak</span>
+        </div>
+      </div>
+    </div>
+
+    ${summary.total > 0 ? `<div class="lucid-summary"><strong>${summary.lucid}</strong> of ${summary.total} dream${summary.total!==1?'s':''} lucid this month</div>` : ''}
+
+    <div class="dash-quick-actions">
+      <button class="btn btn-primary" onclick="openDreamForm()"><i data-lucide="pen-line" style="width:16px;height:16px;"></i> Log Dream</button>
+      <button class="btn btn-secondary" onclick="navigate('reality-check')"><i data-lucide="scan-eye" style="width:16px;height:16px;"></i> Reality Check</button>
+      <button class="btn btn-secondary" onclick="navigate('ritual')"><i data-lucide="sunset" style="width:16px;height:16px;"></i> Evening Ritual</button>
+    </div>
+
+    ${signs.length > 0 ? `<div class="dream-signs-section"><h3>Your Dream Signs</h3><div class="dream-sign-chips">${signs.map(s => `<button class="dream-sign-chip" onclick="filterBySign('${escapeHtml(s.word)}')">${s.word}${s.isLucidSign ? '<span class="sign-star">&#9733;</span>' : ''}</button>`).join('')}</div></div>` : ''}
+
+    <div class="dash-stats">
+      <div class="card stat-card"><div class="stat-value">${streak}</div><div class="stat-label">Day streak</div><i data-lucide="flame" class="stat-icon" style="width:44px;height:44px;color:var(--accent);"></i></div>
+      <div class="card stat-card"><div class="stat-value">${totalDreams}</div><div class="stat-label">Dreams recorded</div><i data-lucide="book-open" class="stat-icon" style="width:44px;height:44px;color:var(--accent);"></i></div>
+      <div class="card stat-card"><div class="stat-value">${lucidDreams}</div><div class="stat-label">Lucid dreams</div><i data-lucide="eye" class="stat-icon" style="width:44px;height:44px;color:var(--accent);"></i></div>
+      <div class="card stat-card"><div class="stat-value">${avgLucidity}</div><div class="stat-label">Avg lucidity</div><i data-lucide="star" class="stat-icon" style="width:44px;height:44px;color:var(--accent);"></i></div>
+    </div>
+    ${totalDreams>0?`<h2 style="margin-bottom:14px;">Recent Dreams</h2><div class="dream-list">${dreamsCache.slice(-3).reverse().map(d=>renderDreamCard(d)).join('')}</div>`:`<div class="card empty-state"><svg width="72" height="72" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="30" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"/><path d="M40 10 A30 30 0 1 1 40 70 A15 30 0 1 0 40 10Z" fill="var(--accent)" opacity="0.2"/></svg><h3>Begin your dream journey</h3><p>Log your first dream to start tracking patterns and building lucidity.</p><button class="btn btn-primary" onclick="openDreamForm()">Log your first dream</button></div>`}
+  </div>`;
+}
+
+// Navigate to journal filtered by dream sign
+function filterBySign(word) {
+  currentJournalFilter = 'sign:' + word;
+  navigate('journal');
+}
+
+// ---- Dream Journal ----
+const EMOTIONS = ['Joy','Fear','Wonder','Peace','Anxiety','Excitement','Sadness','Confusion','Nostalgia','Awe','Curiosity','Love'];
+
+function renderJournal() {
+  const isSignFilter = currentJournalFilter.startsWith('sign:');
+  const signWord = isSignFilter ? currentJournalFilter.replace('sign:','') : '';
+  return `<div class="page">
+    <div class="journal-header"><h1>Dream Journal</h1><button class="btn btn-primary" onclick="openDreamForm()"><i data-lucide="plus" style="width:16px;height:16px;"></i> New Entry</button></div>
+    <div class="search-box"><i data-lucide="search"></i><input type="text" id="journalSearch" placeholder="Search dreams..." value="${escapeHtml(currentJournalSearch)}" aria-label="Search dreams"></div>
+    <div class="filter-row" style="margin-top:10px;">
+      <button class="chip ${currentJournalFilter==='all'?'selected':''}" data-filter="all">All</button><button class="chip ${currentJournalFilter==='lucid'?'selected':''}" data-filter="lucid">Lucid</button><button class="chip ${currentJournalFilter==='non-lucid'?'selected':''}" data-filter="non-lucid">Non-lucid</button>
+      ${isSignFilter ? `<button class="chip selected" data-filter="sign:${escapeHtml(signWord)}">Sign: ${escapeHtml(signWord)}</button>` : ''}
+    </div>
+    <div id="dreamListContainer" style="margin-top:16px;">${renderDreamList(currentJournalFilter, currentJournalSearch)}</div>
+  </div>`;
+}
+
+function renderDreamList(filter='all',search='') {
+  let dreams=[...dreamsCache].reverse();
+  if(filter==='lucid') dreams=dreams.filter(d=>d.isLucid);
+  else if(filter==='non-lucid') dreams=dreams.filter(d=>!d.isLucid);
+  else if(filter.startsWith('sign:')) { const w=filter.replace('sign:','').toLowerCase(); dreams=dreams.filter(d=>(d.narrative||'').toLowerCase().includes(w)||(d.title||'').toLowerCase().includes(w)); }
+  if(search){const q=search.toLowerCase();dreams=dreams.filter(d=>d.title.toLowerCase().includes(q)||d.narrative.toLowerCase().includes(q));}
+  if(!dreams.length) return `<div class="empty-state" style="padding:40px 0;"><svg width="56" height="56" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="24" stroke="var(--accent)" stroke-width="1" opacity="0.25"/><path d="M32 8 A24 24 0 1 1 32 56 A12 24 0 1 0 32 8Z" fill="var(--accent)" opacity="0.12"/></svg><h3>${search?'No matching dreams':'Your journal awaits'}</h3><p>${search?'Try a different search term or filter.':'Record your dreams to discover patterns and improve recall.'}</p>${!search?'<button class="btn btn-primary btn-sm" onclick="openDreamForm()">Log a dream</button>':''}</div>`;
+  return `<div class="dream-list">${dreams.map(d=>renderDreamCard(d)).join('')}</div>`;
+}
+
+function renderDreamCard(d) {
+  const isLucid = d.isLucid;
+  const date=new Date(d.date+'T00:00:00'), day=date.getDate(), month=date.toLocaleString('en',{month:'short'});
+  const stars=Array.from({length:5},(_,i)=>`<span class="l-star${i<(d.lucidityLevel||0)?'':' dim'}">&#9733;</span>`).join('');
+  return `<div class="dream-entry-card ${isLucid?'is-lucid':''}" onclick="viewDream('${d.id}')" tabindex="0" role="button" aria-label="View dream: ${escapeHtml(d.title)}">
+    <div class="dream-thumb" data-thumb="${d.id}">${renderThumb(d.id)}</div>
+    <div class="dream-body">
+      <div class="dream-title">${escapeHtml(d.title)}${isLucid?'<span class="lucid-star-marker">&#9733;</span>':''}</div>
+      <div class="dream-preview">${escapeHtml(d.narrative)}</div>
+      <div class="dream-bottom"><div class="dream-lucidity">${stars}</div>${d.emotions?d.emotions.slice(0,3).map(e=>`<span class="badge badge-accent" style="font-size:0.68rem;">${e}</span>`).join(''):''}</div>
+    </div>
+  </div>`;
+}
+
+// ---- Dream form modal ----
+async function openDreamForm(editId=null) {
+  const existing=editId?await getDream(editId):null;
+  const now=new Date();
+  const dateVal=existing?existing.date:now.toISOString().split('T')[0];
+  const timeVal=existing?(existing.time||''):now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const title=existing?escapeHtml(existing.title):'';
+  const narrative=existing?escapeHtml(existing.narrative):'';
+  const lucidity=existing?(existing.lucidityLevel||0):0;
+  const isLucid=existing?!!existing.isLucid:false;
+  const selectedEmotions=existing?(existing.emotions||[]):[];
+  const overlay=document.createElement('div'); overlay.className='modal-overlay'; overlay.id='dreamModal';
+  overlay.innerHTML=`<div class="modal">
+    <div class="modal-header"><h2>${existing?'Edit Dream':'Log a Dream'}</h2><button class="btn-icon btn-secondary" onclick="closeModal()" aria-label="Close"><i data-lucide="x" style="width:20px;height:20px;"></i></button></div>
+    <div class="journal-form" style="display:flex;flex-direction:column;gap:18px;">
+      <div class="form-group"><label for="dreamTitle">Title</label><input type="text" id="dreamTitle" placeholder="The floating library..." value="${title}" maxlength="120"></div>
+      <div class="form-row"><div class="form-group"><label for="dreamDate">Date</label><input type="date" id="dreamDate" value="${dateVal}"></div><div class="form-group"><label for="dreamTime">Time</label><input type="time" id="dreamTime" value="${timeVal}"></div></div>
+      <div class="form-group"><label>Lucidity Level</label><div class="star-slider" id="starSlider">${[1,2,3,4,5].map(n=>`<button class="star-btn${n<=lucidity?' filled':''}" data-val="${n}" aria-label="${n} star${n>1?'s':''}">&#9733;</button>`).join('')}</div><div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);margin-top:4px;"><span>Hazy</span><span>Fully lucid</span></div></div>
+      <div style="display:flex;align-items:center;gap:12px;"><label class="toggle-switch"><input type="checkbox" id="isLucidToggle" ${isLucid?'checked':''} aria-label="Mark as lucid dream"><span class="toggle-slider"></span></label><span style="font-weight:600;font-size:0.93rem;">This was a lucid dream</span></div>
+      <div class="form-group"><label>Emotions</label><div class="emotion-chips" id="emotionChips">${EMOTIONS.map(e=>`<button class="chip${selectedEmotions.includes(e)?' selected':''}" data-emotion="${e}">${e}</button>`).join('')}</div></div>
+      <div class="form-group"><label for="dreamNarrative">Dream Narrative</label><textarea id="dreamNarrative" placeholder="Describe your dream in as much detail as you can recall...">${narrative}</textarea></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">${existing?`<button class="btn btn-danger btn-sm" onclick="deleteDreamAction('${existing.id}')">Delete</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveDream('${editId||''}')">${existing?'Update':'Save Dream'}</button></div>
+    </div></div>`;
+  document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  let currentLucidity=lucidity;
+  overlay.querySelectorAll('.star-btn').forEach(btn=>{btn.addEventListener('click',()=>{currentLucidity=parseInt(btn.dataset.val);overlay.querySelectorAll('.star-btn').forEach(b=>b.classList.toggle('filled',parseInt(b.dataset.val)<=currentLucidity));});});
+  overlay.querySelectorAll('.emotion-chips .chip').forEach(chip=>{chip.addEventListener('click',()=>chip.classList.toggle('selected'));});
+  // Auto-toggle isLucid when lucidity >= 3
+  const lucidToggle = overlay.querySelector('#isLucidToggle');
+  overlay.querySelectorAll('.star-btn').forEach(btn=>{btn.addEventListener('click',()=>{if(parseInt(btn.dataset.val)>=3&&currentLucidity>=3)lucidToggle.checked=true;});});
+  overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+}
+
+async function saveDream(editId) {
+  const modal=document.getElementById('dreamModal');
+  const title=modal.querySelector('#dreamTitle').value.trim();
+  const date=modal.querySelector('#dreamDate').value;
+  const time=modal.querySelector('#dreamTime').value;
+  const narrative=modal.querySelector('#dreamNarrative').value.trim();
+  const lucidityLevel=[...modal.querySelectorAll('.star-btn.filled')].length;
+  const isLucid=modal.querySelector('#isLucidToggle').checked;
+  const emotions=[...modal.querySelectorAll('.emotion-chips .chip.selected')].map(c=>c.dataset.emotion);
+  if(!title){showToast('Please add a title','alert-circle');return;}
+  if(!narrative){showToast('Describe your dream to save it','alert-circle');return;}
+  let dreamId = editId;
+  if(editId) {
+    const existing = await getDream(editId);
+    await putDream({ ...existing, title, date, time, narrative, lucidityLevel, isLucid, emotions });
+  } else {
+    dreamId = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    await putDream({ id: dreamId, title, date, time, narrative, lucidityLevel, isLucid, emotions, createdAt: Date.now() });
+  }
+  closeModal(); showToast(editId?'Dream updated':'Dream saved');
+  await refreshCache();
+  checkAchievements();
+  await renderPage(currentPage);
+  if (dreamId) triggerImageGeneration(dreamId);
+}
+
+async function deleteDreamAction(id) {
+  if(!confirm('Delete this dream entry permanently?'))return;
+  await deleteDreamFromDB(id); await deleteDreamImage(id);
+  closeModal(); showToast('Dream deleted','trash-2');
+  await renderPage(currentPage);
+}
+
+async function viewDream(id) {
+  const d=await getDream(id); if(!d)return;
+  const overlay=document.createElement('div'); overlay.className='modal-overlay'; overlay.id='dreamModal';
+  const date=new Date(d.date+'T00:00:00');
+  const dateStr=date.toLocaleDateString('en',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const stars=Array.from({length:5},(_,i)=>`<span style="color:${i<(d.lucidityLevel||0)?'var(--accent)':'var(--muted)'};opacity:${i<(d.lucidityLevel||0)?'1':'0.2'};">&#9733;</span>`).join('');
+  const imgRec = await getDreamImage(id);
+  const cachedUrl = window.__dreamImageCache && window.__dreamImageCache[id];
+  const imgUrl = (imgRec && imgRec.url) || cachedUrl;
+  const bannerHtml = imgUrl
+    ? `<div data-banner="${id}"><img class="dream-banner" src="${imgUrl}" alt="Dream illustration" loading="lazy"></div>`
+    : `<div data-banner="${id}"><div class="dream-banner-shimmer shimmer"></div></div>`;
+  // If no image yet, trigger generation so it appears when ready
+  if (!imgUrl) triggerImageGeneration(id);
+  const lucidBadge = d.isLucid ? '<span class="badge badge-lucid" style="margin-left:8px;">Lucid</span>' : '';
+  overlay.innerHTML=`<div class="modal">
+    <div class="modal-header" style="align-items:start;"><div><h2 style="margin-bottom:4px;">${escapeHtml(d.title)}</h2><div style="color:var(--muted);font-size:0.86rem;">${dateStr}${d.time?' at '+d.time:''}</div></div><button class="btn-icon btn-secondary" onclick="closeModal()" aria-label="Close"><i data-lucide="x" style="width:20px;height:20px;"></i></button></div>
+    ${bannerHtml}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><div style="font-size:1.15rem;">${stars}</div><span class="badge badge-accent">${(d.lucidityLevel||0)>=3?'High lucidity':'Low lucidity'}</span>${lucidBadge}</div>
+    ${d.emotions&&d.emotions.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${d.emotions.map(e=>`<span class="badge badge-accent">${e}</span>`).join('')}</div>`:''}
+    <div style="line-height:1.8;white-space:pre-wrap;color:var(--text);font-size:0.93rem;">${escapeHtml(d.narrative)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
+      <button class="btn btn-secondary btn-sm" onclick="regenerateImage('${d.id}')" title="Regenerate image"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Regenerate art</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteDreamAction('${d.id}')">Delete</button>
+      <button class="btn btn-secondary" onclick="closeModal();openDreamForm('${d.id}')">Edit</button>
+    </div></div>`;
+  document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+}
+
+async function regenerateImage(dreamId) {
+  await deleteDreamImage(dreamId);
+  if (window.__dreamImageCache) delete window.__dreamImageCache[dreamId];
+  // Show shimmer in current banner while regenerating
+  const banner = document.querySelector(`[data-banner="${dreamId}"]`);
+  if (banner) banner.innerHTML = `<div class="dream-banner-shimmer shimmer"></div>`;
+  const thumb = document.querySelector(`[data-thumb="${dreamId}"]`);
+  if (thumb) thumb.innerHTML = `<div class="thumb-shimmer shimmer"></div>`;
+  showToast('Regenerating dream art...', 'image');
+  triggerImageGeneration(dreamId, 0);
+}
+
+function closeModal() { const m=document.getElementById('dreamModal'); if(m)m.remove(); }
+
+// ---- Reality Checks ----
+const RC_TECHNIQUES = [
+  {id:'hand',name:'Hand Check',icon:'hand',desc:'Look at your hands carefully. In dreams, hands often appear distorted — extra fingers, blurred outlines, or changing shapes.',instructions:['Hold both hands in front of you at arm\'s length.','Focus on each finger individually. Count them.','Look away briefly, then look back. Do your hands look the same?','Check for extra or missing fingers, or distorted shapes.','If anything seems off, perform a second reality check to confirm.']},
+  {id:'nose',name:'Nose Pinch',icon:'wind',desc:'Pinch your nose shut and try to breathe through it. In a dream, your physical body continues breathing.',instructions:['Pinch your nose firmly shut with thumb and index finger.','Try to inhale through your closed nose.','If you can breathe, you are in a dream.','Stay calm — excitement can wake you. Stabilise by rubbing hands together.','If you cannot breathe, you are awake — still valuable practice.']},
+  {id:'text',name:'Text Read-Back',icon:'type',desc:'Read text, look away, then read it again. In dreams, written text often changes, scrambles, or becomes unreadable.',instructions:['Find any written text — a book, sign, or phone screen.','Read it carefully. Note what it says.','Look away for two seconds, then look back.','Compare the two readings. Has the text changed?','If different, you\'re likely dreaming. Stay composed and explore.']},
+  {id:'light',name:'Light Switch',icon:'zap',desc:'Flip a light switch. In dreams, lighting changes rarely work as expected — toggles have no effect or produce wrong results.',instructions:['Find a light switch and flip it on or off.','Observe the result. Did the lighting change as expected?','Try another switch if unsure. In dreams, electrical devices behave erratically.','If nothing happens or the result is wrong, you may be dreaming.','Confirm with a second reality check before getting too excited.']},
+  {id:'mirror',name:'Mirror Check',icon:'scan',desc:'Look into a mirror. In dreams, reflections often appear distorted, blurry, or show something entirely different.',instructions:['Find a mirror or reflective surface.','Look at your reflection carefully. Is it normal?','Check for distortions — wrong features, blurriness, or strange images.','In dreams, mirrors rarely show an accurate reflection.','If something seems off, stay calm and perform a second check.']}
+];
+
+// Notification RC options (subset of 4)
+const RC_NOTIF_OPTIONS = [
+  { id: 'fingers', name: 'Count your fingers', short: 'Count your fingers' },
+  { id: 'nose', name: 'Nose pinch', short: 'Pinch your nose and breathe' },
+  { id: 'text', name: 'Read text twice', short: 'Read some text twice' },
+  { id: 'hands', name: 'Inspect your hands', short: 'Look closely at your hands' },
+];
+
+function renderRealityCheck() {
+  return `<div class="page"><h1 style="margin-bottom:6px;">Reality Checks</h1><p class="text-muted" style="margin-bottom:24px;max-width:560px;">Reality checks are the foundation of lucid dreaming. Perform them mindfully throughout the day, and the habit will carry into your dreams.</p>
+    <div class="rc-grid">${RC_TECHNIQUES.map(rc=>`<div class="card rc-card"><div class="rc-illustration">${getRCIllustration(rc.id)}</div><h3>${rc.name}</h3><p>${rc.desc}</p><button class="btn btn-primary btn-sm" onclick="practiceRC('${rc.id}')">Practice now</button></div>`).join('')}</div>
+    <div class="card rc-reminder" style="margin-top:28px;padding:24px;"><h3 style="margin-bottom:6px;">Reminder Schedule</h3><p class="text-muted" style="margin-bottom:14px;font-size:0.88rem;">Set times for reality check reminders throughout the day.</p>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;"><label class="toggle-switch"><input type="checkbox" id="rcToggle" aria-label="Toggle reminders"><span class="toggle-slider"></span></label><span style="font-weight:500;font-size:0.93rem;">Enable reminders</span></div>
+    <div class="reminder-times" id="rcTimes"></div></div></div>`;
+}
+
+function getRCIllustration(id) {
+  const svgs={hand:`<svg viewBox="0 0 120 120" fill="none"><path d="M60 95V45M45 50V30M60 45V25M75 50V35M90 60V50M60 95C35 95 25 80 25 65V55C25 50 30 45 35 45C40 45 45 50 45 55V50" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/><circle cx="45" cy="28" r="2" fill="var(--accent)" opacity="0.4"/><circle cx="60" cy="23" r="2" fill="var(--accent)" opacity="0.4"/><circle cx="75" cy="33" r="2" fill="var(--accent)" opacity="0.4"/></svg>`,
+  nose:`<svg viewBox="0 0 120 120" fill="none"><ellipse cx="60" cy="70" rx="22" ry="28" stroke="var(--accent)" stroke-width="1.5" opacity="0.7"/><path d="M48 62C48 62 42 55 40 60M72 62C72 62 78 55 80 60" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><line x1="55" y1="42" x2="55" y2="30" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="65" y1="42" x2="65" y2="30" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" opacity="0.6"/></svg>`,
+  text:`<svg viewBox="0 0 120 120" fill="none"><rect x="20" y="25" width="80" height="70" rx="6" stroke="var(--accent)" stroke-width="1.5" opacity="0.5"/><line x1="32" y1="40" x2="88" y2="40" stroke="var(--accent)" stroke-width="2" opacity="0.6"/><line x1="32" y1="52" x2="78" y2="52" stroke="var(--accent)" stroke-width="2" opacity="0.4"/><line x1="32" y1="64" x2="85" y2="64" stroke="var(--accent)" stroke-width="2" opacity="0.3"/><line x1="32" y1="76" x2="60" y2="76" stroke="var(--accent)" stroke-width="2" opacity="0.25"/></svg>`,
+  light:`<svg viewBox="0 0 120 120" fill="none"><circle cx="60" cy="50" r="18" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/><path d="M50 65H70V80C70 82 68 84 66 84H54C52 84 50 82 50 80V65Z" stroke="var(--accent)" stroke-width="1.5" opacity="0.5"/><line x1="60" y1="28" x2="60" y2="18" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"/><line x1="42" y1="35" x2="35" y2="28" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"/><line x1="78" y1="35" x2="85" y2="28" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"/></svg>`,
+  mirror:`<svg viewBox="0 0 120 120" fill="none"><ellipse cx="60" cy="55" rx="30" ry="38" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/><ellipse cx="60" cy="55" rx="26" ry="34" stroke="var(--accent)" stroke-width="0.8" opacity="0.3"/><rect x="48" y="90" width="24" height="6" rx="2" stroke="var(--accent)" stroke-width="1" opacity="0.4"/><line x1="60" y1="96" x2="60" y2="108" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"/></svg>`};
+  return svgs[id]||'';
+}
+
+function practiceRC(id) {
+  const rc=RC_TECHNIQUES.find(r=>r.id===id); if(!rc)return;
+  const o=document.createElement('div'); o.className='modal-overlay'; o.id='dreamModal';
+  o.innerHTML=`<div class="modal"><div class="modal-header"><h2>${rc.name}</h2><button class="btn-icon btn-secondary" onclick="closeModal()" aria-label="Close"><i data-lucide="x" style="width:20px;height:20px;"></i></button></div><p class="text-muted" style="margin-bottom:18px;line-height:1.7;font-size:0.9rem;">${rc.desc}</p><h3 style="margin-bottom:12px;">Step-by-step</h3><div style="display:flex;flex-direction:column;gap:10px;">${rc.instructions.map((s,i)=>`<div style="display:flex;gap:10px;align-items:start;"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;">${i+1}</span><span style="line-height:1.6;font-size:0.9rem;">${s}</span></div>`).join('')}</div><div class="text-center" style="margin-top:22px;"><button class="btn btn-primary" onclick="closeModal();showToast('Reality check complete!','check-circle')">Done</button></div></div>`;
+  document.body.appendChild(o); lucide.createIcons({nodes:[o]});
+  o.addEventListener('click',e=>{if(e.target===o)closeModal();});
+}
+
+// ---- Technique Library ----
+const TECHNIQUES=[
+  {id:'wild',name:'WILD',full:'Wake-Induced Lucid Dream',difficulty:3,desc:'Transition directly from wakefulness into a lucid dream without losing consciousness. The most powerful but challenging method.',steps:['Lie on your back. Close your eyes and relax completely.','Allow your body to fall asleep while keeping your mind alert.','Watch for hypnagogic imagery — swirling colours, shapes, scenes.','Do not engage yet. Simply observe as imagery becomes vivid.','When a scene becomes immersive, gently step into it.','Stabilise by rubbing hands, spinning, or touching surfaces.'],tips:'WILD works best during WBTB or naps. If you experience sleep paralysis, stay calm — it is harmless. Beginners may need weeks of practice.'},
+  {id:'mild',name:'MILD',full:'Mnemonic Induction of Lucid Dreams',difficulty:2,desc:'Uses prospective memory to set a strong intention to recognise you\'re dreaming. One of the highest success rates for beginners.',steps:['Set an alarm for 4-6 hours after falling asleep.','When you wake, recall any dream in full detail.','Repeat: "Next time I\'m dreaming, I will remember I\'m dreaming."','Visualise yourself back in the dream, recognising you\'re dreaming.','Hold this intention as the last thought before sleep.','If you wake during the night, repeat the process.'],tips:'The key is genuine, focused intention — not repeating words mechanically. Combine with WBTB for significantly better results.'},
+  {id:'dild',name:'DILD',full:'Dream-Induced Lucid Dream',difficulty:1,desc:'Become lucid from within a dream by noticing something impossible. The most natural and accessible method.',steps:['Perform reality checks 5-10 times every day — genuinely and mindfully.','Keep a detailed dream journal. Review weekly for dream signs.','Before sleep, review your most common dream signs.','In a dream, notice something unusual — a dream sign or odd physics.','"I\'m dreaming!" — stay calm to avoid waking up.','Stabilise by rubbing hands, spinning, or touching objects.'],tips:'The secret is consistent, mindful reality checks. Review your journal weekly for personal dream signs.'},
+  {id:'wbtb',name:'WBTB',full:'Wake Back to Bed',difficulty:2,desc:'Wake during peak REM periods and return to sleep with intention. The single most effective lucidity booster.',steps:['Set an alarm for 4-6 hours after bedtime.','Get out of bed. Stay awake 15-45 minutes.','Read about lucid dreaming, review your journal, or practice MILD.','Avoid bright screens. Keep lighting dim and calm.','Return to bed with clear intention to become lucid.','Fall asleep while holding the intention firmly.'],tips:'Experiment with 20-30 minutes of wake time. Combine with WILD or MILD for best results.'},
+  {id:'ssild',name:'SSILD',full:'Senses Initiated Lucid Dream',difficulty:2,desc:'Cycle through senses — sight, hearing, touch — to create heightened awareness that carries into sleep. Gentler than WILD.',steps:['Perform after WBTB for best results. Lie comfortably.','Focus on sight: observe hypnagogic imagery behind your eyelids.','Shift to hearing: notice ambient sounds or internal soundscape.','Move to touch: feel blanket weight, pillow, body contact.','Cycle sight, hearing, touch 4-5 times, ~15 seconds each.','Let go completely. Allow sleep while remaining passively aware.'],tips:'Ideal for people who find WILD too intense. Many report their first lucid dream within a week of consistent practice.'}
+];
+
+function renderLibrary() {
+  return `<div class="page"><h1 style="margin-bottom:6px;">Technique Library</h1><p class="text-muted" style="margin-bottom:24px;max-width:560px;">Explore proven methods for inducing lucid dreams. Experiment to find what works best for you.</p>
+    <div class="tech-grid">${TECHNIQUES.map(t=>{const bm=bookmarksCache.includes(t.id);return `<div class="card tech-card"><button class="btn-icon btn-secondary tech-bookmark-btn" onclick="toggleBookmark('${t.id}')" aria-label="${bm?'Remove bookmark':'Bookmark'}"><i data-lucide="${bm?'bookmark-check':'bookmark'}" style="width:16px;height:16px;${bm?'color:var(--accent);':''}"></i></button><div class="tech-top"><div><h3>${t.name}</h3><div style="font-size:0.8rem;color:var(--muted);">${t.full}</div></div></div><div style="display:flex;align-items:center;gap:8px;margin:6px 0 10px;"><span style="font-size:0.76rem;color:var(--muted);">Difficulty</span><div class="diff-dots">${[1,2,3].map(n=>`<span class="${n<=t.difficulty?'filled':''}"></span>`).join('')}</div></div><div class="tech-desc">${t.desc}</div><div class="tech-accordion">${t.steps.map((s,i)=>`<div class="accordion-item"><div class="accordion-header" onclick="toggleAccordion(this)"><span>Step ${i+1}</span><i data-lucide="chevron-down" class="chevron" style="width:16px;height:16px;"></i></div><div class="accordion-body"><div class="accordion-body-inner">${s}</div></div></div>`).join('')}</div><div class="tech-tip"><strong>Success tip:</strong> ${t.tips}</div></div>`;}).join('')}</div></div>`;
+}
+
+function toggleAccordion(h){const b=h.nextElementSibling;b.classList.toggle('open');h.classList.toggle('open');}
+async function toggleBookmark(id){const idx=bookmarksCache.indexOf(id);if(idx>=0){await removeBookmark(id);showToast('Bookmark removed');}else{await putBookmark(id);showToast('Technique bookmarked');}await renderPage(currentPage);}
+
+// ---- Sleep Schedule ----
+async function renderSleep() {
+  const sleepSchedule = await getSetting('sleepSchedule',{bedtime:'23:00',waketime:'07:00'});
+  const {bedtime,waketime}=sleepSchedule;
+  const remWindows=calculateREMWindows(bedtime,waketime);
+  return `<div class="page"><h1 style="margin-bottom:6px;">Sleep Schedule</h1><p class="text-muted" style="margin-bottom:24px;max-width:560px;">Align your practice with natural sleep cycles. REM periods lengthen as the night progresses.</p>
+    <div class="sleep-grid">
+      <div class="card" style="padding:24px;"><h3 style="margin-bottom:14px;">Your Schedule</h3><div class="form-group" style="margin-bottom:14px;"><label for="bedtime">Bedtime</label><input type="time" id="bedtime" value="${bedtime}"></div><div class="form-group" style="margin-bottom:18px;"><label for="waketime">Wake time</label><input type="time" id="waketime" value="${waketime}"></div><button class="btn btn-primary btn-sm" onclick="saveSleepSchedule()">Save Schedule</button></div>
+      <div class="card" style="padding:24px;"><h3 style="margin-bottom:14px;">WBTB Alarm Calculator</h3><p class="text-muted" style="margin-bottom:14px;font-size:0.88rem;line-height:1.6;">Set your WBTB alarm for the optimal REM window.</p><div style="background:var(--accent-dim);border-radius:var(--radius-sm);padding:16px;text-align:center;"><div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Suggested WBTB alarm</div><div style="font-family:'Lora',serif;font-size:1.8rem;color:var(--accent);">${calculateWBTB(bedtime,waketime)}</div></div><p class="text-muted" style="margin-top:10px;font-size:0.8rem;line-height:1.6;">Wake, stay up 20-30 min, return to bed with lucid intention.</p></div>
+    </div>
+    <div class="card rem-timeline" style="padding:24px;margin-top:20px;"><h3 style="margin-bottom:14px;">Tonight's REM Windows</h3>${renderREMTimeline(remWindows)}<div class="rem-legend"><span><span class="dot" style="background:var(--accent-dim);border:1px solid var(--card-border);"></span> Sleep period</span><span><span class="dot" style="background:var(--accent);opacity:0.4;"></span> REM window</span><span><span class="dot" style="background:var(--accent);"></span> Optimal lucid window</span></div></div></div>`;
+}
+
+function timeToMinutes(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function minutesToTime(m){m=((m%1440)+1440)%1440;return `${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}`;}
+function calculateREMWindows(bedtime,waketime){let bed=timeToMinutes(bedtime),wake=timeToMinutes(waketime);if(wake<=bed)wake+=1440;const total=wake-bed,windows=[];let s=bed+70,len=10,c=1;while(s<wake){windows.push({start:s,end:Math.min(s+len,wake),cycle:c,isOptimal:c>=3});s+=90;len=Math.min(len+10,40);c++;}return{windows,total,bed,wake};}
+function calculateWBTB(bedtime,waketime){const{windows}=calculateREMWindows(bedtime,waketime);const o=windows.find(w=>w.isOptimal);return o?minutesToTime(o.start-5):windows.length?minutesToTime(windows[windows.length-1].start-5):'04:30';}
+function renderREMTimeline({windows,total,bed,wake}){const h=80,w=700,pad=44,barY=30,barH=26,barW=w-pad*2;let s=`<svg viewBox="0 0 ${w} ${h}" fill="none" role="img" aria-label="REM timeline"><rect x="${pad}" y="${barY}" width="${barW}" height="${barH}" rx="5" fill="var(--accent-dim)" opacity="0.3"/>`;windows.forEach(v=>{const x1=pad+((v.start-bed)/total)*barW,x2=pad+((v.end-bed)/total)*barW,ww=Math.max(x2-x1,4);if(v.isOptimal){s+=`<rect x="${x1}" y="${barY-3}" width="${ww}" height="${barH+6}" rx="4" fill="var(--accent)" opacity="0.55"/><text x="${x1+ww/2}" y="${barY-8}" text-anchor="middle" fill="var(--accent)" font-size="9" font-family="Inter,sans-serif">Optimal</text>`;}else{s+=`<rect x="${x1}" y="${barY}" width="${ww}" height="${barH}" rx="4" fill="var(--accent)" opacity="0.22"/>`;}s+=`<text x="${x1+ww/2}" y="${barY+barH+14}" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="JetBrains Mono,monospace">R${v.cycle}</text>`;});s+=`<text x="${pad}" y="${barY-6}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono,monospace">${minutesToTime(bed)}</text><text x="${pad+barW}" y="${barY-6}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="JetBrains Mono,monospace">${minutesToTime(wake)}</text></svg>`;return s;}
+async function saveSleepSchedule(){const bedtime=document.getElementById('bedtime').value,waketime=document.getElementById('waketime').value;await putSetting('sleepSchedule',{bedtime,waketime});showToast('Sleep schedule updated');await renderPage(currentPage);}
+
+// ---- Evening Ritual ----
+async function renderRitual() {
+  const signs = extractDreamSigns(dreamsCache);
+  const today = new Date().toISOString().split('T')[0];
+  const existingIntention = await getIntention(today);
+  const defaultIntention = 'Tonight I will recognise that I am dreaming.';
+  const intention = existingIntention ? existingIntention.text : defaultIntention;
+  const rcSetup = await getSetting('rcNotifSetup', { technique: 'fingers', frequency: 5, enabled: false });
+  const ritualTime = await getSetting('ritualTime', '22:00');
+  const bedtime = await getSetting('sleepSchedule', { bedtime: '23:00', waketime: '07:00' });
+
+  // Calculate WBTB time: 5h30m from now
+  const now = new Date();
+  const wbtbTime = new Date(now.getTime() + 5.5 * 3600000);
+  const wbtbStr = wbtbTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  return `<div class="page ritual-container">
+    <div class="ritual-mist-bg"></div>
+    <h1 style="margin-bottom:6px;position:relative;">Evening Ritual</h1>
+    <p class="text-muted" style="margin-bottom:28px;max-width:560px;position:relative;">Prepare your mind for lucid dreaming with this three-step pre-sleep flow. Consistency is the key to success.</p>
+
+    <div class="card ritual-step" style="position:relative;">
+      <div class="step-num">Step 1</div>
+      <h3 style="margin-bottom:10px;">Review Your Dream Signs</h3>
+      <p class="text-muted" style="margin-bottom:14px;font-size:0.9rem;line-height:1.7;">These are the recurring elements in your dreams. When you encounter them while awake, perform a reality check. When you see them in a dream, you may become lucid.</p>
+      ${signs.length > 0 ? `<div class="dream-sign-chips">${signs.map(s => `<span class="dream-sign-chip" style="cursor:default;">${s.word}${s.isLucidSign ? '<span class="sign-star">&#9733;</span>' : ''}<span style="font-size:0.72rem;color:var(--muted);margin-left:4px;">(${s.count})</span></span>`).join('')}</div>` : '<p class="text-muted" style="font-size:0.85rem;">Log more dreams to discover your dream signs.</p>'}
+    </div>
+
+    <div class="card ritual-step" style="position:relative;">
+      <div class="step-num">Step 2</div>
+      <h3 style="margin-bottom:10px;">Set Your MILD Intention</h3>
+      <p class="text-muted" style="margin-bottom:14px;font-size:0.9rem;line-height:1.7;">Repeat this affirmation as you fall asleep. Make it personal and meaningful for best results.</p>
+      <textarea class="ritual-intention-input" id="ritualIntention" rows="2">${escapeHtml(intention)}</textarea>
+      <div style="text-align:right;margin-top:10px;"><button class="btn btn-primary btn-sm" onclick="saveIntention()">Save intention</button></div>
+    </div>
+
+    <div class="card ritual-step" style="position:relative;">
+      <div class="step-num">Step 3</div>
+      <h3 style="margin-bottom:10px;">WBTB Alarm</h3>
+      <p class="text-muted" style="margin-bottom:14px;font-size:0.9rem;line-height:1.7;">Set an alarm for approximately 5 hours 30 minutes from now to wake during a peak REM window, then return to bed with lucid intention.</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="font-family:'Lora',serif;font-size:1.6rem;color:var(--accent);">${wbtbStr}</div>
+        <button class="btn btn-secondary btn-sm" onclick="setWBTBAlarm()">Set WBTB Alarm</button>
+      </div>
+      <div class="wbtb-info"><strong>Note:</strong> WBTB alarm uses the Notification API with a timed delay. If you close this tab before the alarm fires, the notification will not appear unless a service worker is active in the background. For reliable background delivery, install the app as a PWA over HTTPS.</div>
+    </div>
+  </div>`;
+}
+
+async function saveIntention() {
+  const text = document.getElementById('ritualIntention').value.trim();
+  if (!text) { showToast('Write an intention first', 'alert-circle'); return; }
+  const today = new Date().toISOString().split('T')[0];
+  await putIntention({ date: today, text, createdAt: Date.now() });
+  showToast('Intention saved. Sweet dreams.');
+}
+
+let wbtbAlarmTimer = null;
+function setWBTBAlarm() {
+  const delay = 5.5 * 3600000; // 5h30m
+  if (!('Notification' in window)) {
+    showToast('Notifications not supported in this browser', 'alert-circle');
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      clearTimeout(wbtbAlarmTimer);
+      wbtbAlarmTimer = setTimeout(() => {
+        new Notification('LucidLog — WBTB Alarm', {
+          body: 'Time to wake up! Stay up for 20-30 minutes, review your dream signs, then return to bed with lucid intention.',
+          icon: window.__MOON_ICON_512 || '',
+          tag: 'lucidlog-wbtb'
+        });
+      }, delay);
+      showToast(`WBTB alarm set for 5h 30m from now`, 'alarm-clock');
+    } else {
+      showToast('Notification permission denied. WBTB alarm cannot fire.', 'alert-circle');
+    }
+  });
+}
+
+// ---- Constellation View ----
+function renderConstellation() {
+  if (!dreamsCache.length) {
+    return `<div class="page"><h1 style="margin-bottom:6px;">Constellation</h1><div class="card empty-state" style="margin-top:24px;"><svg width="72" height="72" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="30" stroke="var(--accent)" stroke-width="1" opacity="0.2"/><circle cx="40" cy="40" r="2" fill="var(--accent)" opacity="0.5"/><circle cx="25" cy="30" r="1.5" fill="var(--accent)" opacity="0.3"/><circle cx="55" cy="25" r="1.5" fill="var(--accent)" opacity="0.3"/><circle cx="50" cy="55" r="1.5" fill="var(--accent)" opacity="0.3"/></svg><h3>Your sky is empty</h3><p>Log dreams to fill your personal cosmos. Each dream becomes a star.</p><button class="btn btn-primary btn-sm" onclick="openDreamForm()">Log a dream</button></div></div>`;
+  }
+
+  const svgW = 800, svgH = 500, padX = 50, padY = 40;
+  const plotW = svgW - padX * 2, plotH = svgH - padY * 2;
+
+  // Date range
+  const dates = dreamsCache.map(d => new Date(d.date + 'T00:00:00').getTime());
+  const minDate = Math.min(...dates), maxDate = Math.max(...dates);
+  const dateRange = maxDate - minDate || 86400000;
+
+  // Build star data
+  const stars = dreamsCache.map(d => {
+    const dateMs = new Date(d.date + 'T00:00:00').getTime();
+    const x = padX + ((dateMs - minDate) / dateRange) * plotW;
+    // Y axis: hour of the day from the time field
+    const timeParts = (d.time || '06:00').split(':');
+    const hour = parseInt(timeParts[0] || 6) + parseInt(timeParts[1] || 0) / 60;
+    const y = padY + plotH - (hour / 24) * plotH; // 0 at bottom, 24 at top
+    const wordCount = (d.narrative || '').split(/\s+/).length;
+    const size = Math.max(3, Math.min(10, wordCount / 15));
+    return { ...d, x, y, size };
+  });
+
+  // Y-axis labels
+  const yLabels = [0, 3, 6, 9, 12, 15, 18, 21, 24].map(h => {
+    const y = padY + plotH - (h / 24) * plotH;
+    const label = h === 0 ? '12am' : h < 12 ? h + 'am' : h === 12 ? '12pm' : (h-12) + 'pm';
+    return `<text x="${padX - 8}" y="${y + 4}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="JetBrains Mono,monospace">${label}</text><line x1="${padX}" y1="${y}" x2="${svgW - padX}" y2="${y}" stroke="var(--card-border)" stroke-width="0.5" opacity="0.3"/>`;
+  }).join('');
+
+  let svg = `<svg viewBox="0 0 ${svgW} ${svgH}" class="constellation-svg" fill="none" role="img" aria-label="Dream constellation">`;
+  svg += yLabels;
+
+  // Draw stars
+  for (const s of stars) {
+    const color = s.isLucid ? 'var(--accent)' : 'rgba(159,234,232,0.35)';
+    const glowFilter = s.isLucid ? `filter="url(#lucidGlow)"` : '';
+    svg += `<circle cx="${s.x}" cy="${s.y}" r="${s.size}" fill="${color}" ${glowFilter} class="constellation-star" data-title="${escapeHtml(s.title)}" style="cursor:pointer;"/>`;
+  }
+
+  // Lucid glow filter
+  svg += `<defs><filter id="lucidGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+
+  svg += `</svg>`;
+
+  return `<div class="page">
+    <h1 style="margin-bottom:6px;">Constellation</h1>
+    <p class="text-muted" style="margin-bottom:20px;max-width:560px;">Each star is a dream. Size shows detail. Colour shows lucidity. Tap a star to see its name.</p>
+    <div class="card" style="padding:20px;position:relative;">
+      <div class="constellation-container" id="constellationContainer">
+        ${svg}
+        <div class="constellation-tooltip" id="constTooltip"></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:0.8rem;color:var(--muted);flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0;"></span> Lucid dream</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:rgba(159,234,232,0.35);flex-shrink:0;"></span> Non-lucid</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="font-size:0.75rem;">Star size = word count</span></span>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ---- Settings ----
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+
+async function renderSettings() {
+  const imageGen = await getSetting('imageGen', true);
+  const notifications = await getSetting('notifications', { enabled: false });
+  const rcSetup = await getSetting('rcNotifSetup', { technique: 'fingers', frequency: 5, enabled: false });
+  const ritualTime = await getSetting('ritualTime', '22:00');
+  const isStandalone = window.matchMedia('(display-mode:standalone)').matches || window.navigator.standalone;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isFileProtocol = location.protocol === 'file:';
+  const achievements = await getAllAchievements();
+  const unlockedIds = achievements.map(a => a.id);
+
+  let installHtml = '';
+  if (isFileProtocol) {
+    installHtml = `<div class="install-banner"><i data-lucide="alert-triangle" style="width:18px;height:18px;color:var(--warning);flex-shrink:0;"></i><span>PWA features require HTTPS. Deploy to <a href="https://pages.github.com" target="_blank">GitHub Pages</a> or <a href="https://netlify.com" target="_blank">Netlify</a> for full install support.</span><button class="btn btn-secondary btn-sm" onclick="this.closest('.install-banner').remove()" style="margin-left:auto;flex-shrink:0;">Dismiss</button></div>`;
+  } else if (!isStandalone && deferredPrompt) {
+    installHtml = `<div class="install-banner"><i data-lucide="download" style="width:18px;height:18px;color:var(--accent);flex-shrink:0;"></i><span>Install LucidLog for the best experience.</span><button class="btn btn-primary btn-sm" onclick="installApp()" style="margin-left:auto;flex-shrink:0;">Add to Home Screen</button></div>`;
+  } else if (!isStandalone && isIOS) {
+    installHtml = `<div class="install-banner"><i data-lucide="share" style="width:18px;height:18px;color:var(--accent);flex-shrink:0;"></i><span>Tap the Share icon then "Add to Home Screen" to install LucidLog.</span></div>`;
+  }
+
+  const badgeShelf = ACHIEVEMENTS_DEF.map(def => {
+    const unlocked = unlockedIds.includes(def.id);
+    return `<div class="badge-item ${unlocked?'unlocked':'locked'}"><div class="badge-icon">${unlocked ? def.icon : '?'}</div><div class="badge-name">${def.name}</div></div>`;
+  }).join('');
+
+  return `<div class="page">
+    <h1 style="margin-bottom:24px;">Settings</h1>
+    ${installHtml}
+    <div class="card settings-card"><h3>Features</h3>
+      <div class="settings-row"><div><div class="settings-label">Auto-generate dream art</div><div class="settings-desc">Create AI comic thumbnails for your dreams using Pollinations.ai</div></div><label class="toggle-switch"><input type="checkbox" id="imageGenToggle" ${imageGen?'checked':''} onchange="toggleImageGen()" aria-label="Toggle image generation"><span class="toggle-slider"></span></label></div>
+      <div class="settings-row"><div><div class="settings-label">Reality check reminders</div><div class="settings-desc">Receive periodic reminders to perform reality checks</div></div><label class="toggle-switch"><input type="checkbox" id="rcNotifToggle" ${rcSetup.enabled?'checked':''} onchange="toggleRCNotifications()" aria-label="Toggle RC notifications"><span class="toggle-slider"></span></label></div>
+    </div>
+
+    <div class="card settings-card" id="rcNotifSetupCard" style="${rcSetup.enabled?'':'display:none;'}">
+      <h3 style="margin-bottom:12px;">Reality Check Notification Setup</h3>
+      <p class="text-muted" style="margin-bottom:14px;font-size:0.88rem;line-height:1.6;">Choose a technique and how often you'd like to be reminded. Notifications fire at random intervals between 8am and 10pm.</p>
+      <div style="margin-bottom:16px;">
+        <label style="font-weight:600;font-size:0.85rem;color:var(--muted);display:block;margin-bottom:8px;">Technique</label>
+        ${RC_NOTIF_OPTIONS.map(opt => `<div class="rc-technique-option ${rcSetup.technique===opt.id?'selected':''}" data-rc-technique="${opt.id}" onclick="selectRCTechnique('${opt.id}')"><div class="rc-radio"></div><span style="font-size:0.9rem;">${opt.name}</span></div>`).join('')}
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-weight:600;font-size:0.85rem;color:var(--muted);display:block;margin-bottom:8px;">Daily frequency</label>
+        ${[3,5,8].map(f => `<span class="rc-freq-option ${rcSetup.frequency===f?'selected':''}" data-rc-freq="${f}" onclick="selectRCFreq(${f})">${f}x per day</span>`).join('')}
+      </div>
+      <button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="startRCNotifications()">Start Reminders</button>
+    </div>
+
+    <div class="card settings-card"><h3>Evening Ritual</h3>
+      <div class="settings-row"><div><div class="settings-label">Ritual reminder time</div><div class="settings-desc">When to show your evening ritual notification</div></div><input type="time" id="ritualTimeInput" value="${ritualTime}" style="max-width:120px;" onchange="saveRitualTime()"></div>
+    </div>
+
+    <div class="card settings-card"><h3>Achievements</h3>
+      <div class="badge-shelf">${badgeShelf}</div>
+    </div>
+
+    <div class="card settings-card"><h3>Data</h3>
+      <div class="settings-row"><div><div class="settings-label">Export all data</div><div class="settings-desc">Download your dream journal and settings as JSON</div></div><button class="btn btn-secondary btn-sm" onclick="exportData()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button></div>
+      <div class="settings-row"><div><div class="settings-label">Import data</div><div class="settings-desc">Restore from a previously exported JSON file</div></div><label class="btn btn-secondary btn-sm" style="cursor:pointer;"><i data-lucide="upload" style="width:14px;height:14px;"></i> Import<input type="file" accept=".json" onchange="importData(event)" style="display:none;"></label></div>
+      <div class="settings-row"><div><div class="settings-label" style="color:var(--danger);">Clear all data</div><div class="settings-desc">Permanently delete all dreams, bookmarks, and settings</div></div><button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear</button></div>
+    </div>
+    <div class="text-center text-muted" style="padding:28px 0;font-size:0.8rem;"><div style="margin-bottom:4px;">LucidLog v3.0</div><div>Inspired by "A Field Guide to Lucid Dreaming"</div></div>
+  </div>`;
+}
+
+async function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+  if (result.outcome === 'accepted') showToast('LucidLog installed!');
+  deferredPrompt = null;
+}
+
+async function toggleImageGen() { await putSetting('imageGen', !await getSetting('imageGen',true)); }
+
+async function toggleRCNotifications() {
+  const rc = await getSetting('rcNotifSetup', { technique: 'fingers', frequency: 5, enabled: false });
+  rc.enabled = !rc.enabled;
+  await putSetting('rcNotifSetup', rc);
+  const setupCard = document.getElementById('rcNotifSetupCard');
+  if (setupCard) setupCard.style.display = rc.enabled ? '' : 'none';
+  if (rc.enabled) {
+    showToast('Reality check reminders enabled');
+  } else {
+    stopRCNotifications();
+    showToast('Reality check reminders disabled');
+  }
+}
+
+function selectRCTechnique(id) {
+  document.querySelectorAll('.rc-technique-option').forEach(el => el.classList.toggle('selected', el.dataset.rcTechnique === id));
+}
+function selectRCFreq(n) {
+  document.querySelectorAll('.rc-freq-option').forEach(el => el.classList.toggle('selected', el.dataset.rcFreq == n));
+}
+
+async function startRCNotifications() {
+  const techniqueEl = document.querySelector('.rc-technique-option.selected');
+  const freqEl = document.querySelector('.rc-freq-option.selected');
+  const technique = techniqueEl ? techniqueEl.dataset.rcTechnique : 'fingers';
+  const frequency = freqEl ? parseInt(freqEl.dataset.rcFreq) : 5;
+  await putSetting('rcNotifSetup', { technique, frequency, enabled: true });
+
+  const opt = RC_NOTIF_OPTIONS.find(o => o.id === technique);
+
+  if (!('Notification' in window)) {
+    showToast('Notifications not supported. Using in-app reminders instead.', 'alert-circle');
+    scheduleInAppRCReminders(opt, frequency);
+    return;
+  }
+
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    showToast(`${frequency} daily reminders set for "${opt.name}"`, 'bell');
+    schedulePushRCReminders(opt, frequency);
+  } else {
+    showToast('Push denied. Using in-app reminders instead.', 'alert-circle');
+    scheduleInAppRCReminders(opt, frequency);
+  }
+}
+
+let rcReminderTimers = [];
+
+function stopRCNotifications() {
+  rcReminderTimers.forEach(t => clearTimeout(t));
+  rcReminderTimers = [];
+}
+
+function schedulePushRCReminders(opt, frequency) {
+  stopRCNotifications();
+  const now = new Date();
+  const startHour = 8, endHour = 22;
+  const totalMinutes = (endHour - startHour) * 60;
+  const intervalMin = totalMinutes / frequency;
+
+  for (let i = 0; i < frequency; i++) {
+    const randomOffset = Math.random() * intervalMin * 0.8;
+    const minutesFromStart = i * intervalMin + randomOffset;
+    const fireTime = new Date(now);
+    fireTime.setHours(startHour, 0, 0, 0);
+    fireTime.setTime(fireTime.getTime() + minutesFromStart * 60000);
+
+    const delay = fireTime.getTime() - now.getTime();
+    if (delay <= 0) continue;
+
+    const timer = setTimeout(() => {
+      new Notification('LucidLog — Reality Check', {
+        body: `Are you dreaming? ${opt.short}. If uncertain — you might be.`,
+        icon: window.__MOON_ICON_512 || '',
+        tag: 'lucidlog-rc-' + i
+      });
+    }, delay);
+    rcReminderTimers.push(timer);
+  }
+}
+
+function scheduleInAppRCReminders(opt, frequency) {
+  stopRCNotifications();
+  const now = new Date();
+  const startHour = 8, endHour = 22;
+  const totalMinutes = (endHour - startHour) * 60;
+  const intervalMin = totalMinutes / frequency;
+
+  for (let i = 0; i < frequency; i++) {
+    const randomOffset = Math.random() * intervalMin * 0.8;
+    const minutesFromStart = i * intervalMin + randomOffset;
+    const fireTime = new Date(now);
+    fireTime.setHours(startHour, 0, 0, 0);
+    fireTime.setTime(fireTime.getTime() + minutesFromStart * 60000);
+
+    const delay = fireTime.getTime() - now.getTime();
+    if (delay <= 0) continue;
+
+    const timer = setTimeout(() => {
+      showRCInAppBanner(opt);
+    }, delay);
+    rcReminderTimers.push(timer);
+  }
+}
+
+function showRCInAppBanner(opt) {
+  const banner = document.getElementById('rcNotifBanner');
+  banner.style.display = '';
+  banner.className = 'rc-notification-banner';
+  banner.innerHTML = `<i data-lucide="scan-eye" style="width:22px;height:22px;color:var(--accent);flex-shrink:0;"></i>
+    <div class="rc-notif-text"><strong>Are you dreaming?</strong><div class="rc-notif-sub">${opt.short}. If uncertain — you might be.</div></div>
+    <button class="btn btn-primary btn-sm" onclick="dismissRCBanner();practiceRCById();" style="flex-shrink:0;">Check now</button>
+    <button class="btn-icon btn-secondary" onclick="dismissRCBanner()" style="flex-shrink:0;" aria-label="Dismiss"><i data-lucide="x" style="width:16px;height:16px;"></i></button>`;
+  lucide.createIcons({nodes:[banner]});
+  // Auto-dismiss after 30s
+  setTimeout(() => dismissRCBanner(), 30000);
+}
+
+function dismissRCBanner() {
+  const banner = document.getElementById('rcNotifBanner');
+  banner.style.display = 'none';
+}
+
+function practiceRCById() {
+  // Open the first RC technique practice modal
+  practiceRC('hand');
+}
+
+async function saveRitualTime() {
+  const time = document.getElementById('ritualTimeInput').value;
+  await putSetting('ritualTime', time);
+  showToast('Ritual time updated');
+}
+
+async function toggleNotifications() { const n=await getSetting('notifications',{enabled:false}); await putSetting('notifications',{enabled:!n.enabled}); showToast(n.enabled?'Notifications disabled':'Notifications enabled'); }
+
+async function exportData() {
+  const data = { dreams: await getAllDreams(), bookmarks: (await getAllBookmarks()).map(b=>b), settings: {}, achievements: await getAllAchievements() };
+  const d = await openDB(); const tx = d.transaction('settings','readonly'); const store = tx.objectStore('settings'); let cursor = await store.openCursor();
+  while(cursor) { data.settings[cursor.value.key] = cursor.value.value; cursor = await cursor.continue(); }
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`lucidlog-data-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url);
+  showToast('Data exported successfully');
+}
+
+async function importData(event) {
+  const file=event.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async e=>{try{const data=JSON.parse(e.target.result);const d=await openDB();const storeNames=['dreams','settings','bookmarks','dream_images','achievements','intentions'];const tx=d.transaction(storeNames,'readwrite');if(data.dreams)for(const dream of data.dreams)tx.objectStore('dreams').put(dream);if(data.bookmarks)for(const tid of data.bookmarks)tx.objectStore('bookmarks').put({techniqueId:tid});if(data.settings)for(const[k,v]of Object.entries(data.settings))tx.objectStore('settings').put({key:k,value:v});if(data.achievements)for(const ach of data.achievements)tx.objectStore('achievements').put(ach);await tx.done;showToast('Data imported');await renderPage(currentPage);}catch{showToast('Invalid file format','alert-circle');}};
+  reader.readAsText(file);
+}
+
+async function clearAllData() {
+  if(!confirm('Permanently delete all data?'))return;if(!confirm('This cannot be undone. Really clear everything?'))return;
+  const d=await openDB();const tx=d.transaction(['dreams','settings','bookmarks','dream_images','achievements','intentions'],'readwrite');tx.objectStore('dreams').clear();tx.objectStore('settings').clear();tx.objectStore('bookmarks').clear();tx.objectStore('dream_images').clear();tx.objectStore('achievements').clear();tx.objectStore('intentions').clear();await tx.done;
+  window.__dreamImageCache={};showToast('All data cleared','trash-2');await renderPage(currentPage);
+}
+
+// ---- Sleep Timer ----
+function startSleepTimer() {
+  const o=document.createElement('div'); o.className='modal-overlay'; o.id='dreamModal';
+  o.innerHTML=`<div class="modal text-center"><h2 style="margin-bottom:14px;">Sleep Timer</h2><p class="text-muted" style="margin-bottom:22px;line-height:1.6;">Set a timer to gently remind you to wind down. A calm routine improves dream recall and lucidity.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:22px;"><button class="btn btn-secondary" onclick="setSleepTimer(15)">15 min</button><button class="btn btn-secondary" onclick="setSleepTimer(30)">30 min</button><button class="btn btn-secondary" onclick="setSleepTimer(45)">45 min</button><button class="btn btn-secondary" onclick="setSleepTimer(60)">60 min</button></div><button class="btn btn-secondary btn-sm" onclick="closeModal()">Cancel</button></div>`;
+  document.body.appendChild(o); lucide.createIcons({nodes:[o]});
+  o.addEventListener('click',e=>{if(e.target===o)closeModal();});
+}
+function setSleepTimer(min){closeModal();showToast(`Sleep timer set for ${min} minutes`,'timer');setTimeout(()=>{showToast('Time to wind down. Begin your relaxation routine.','moon');},min*60000);}
+
+// ==================== PAGE EVENT BINDING ====================
+function bindPageEvents(page) {
+  if(page==='journal'){
+    const searchInput=document.getElementById('journalSearch'); 
+    if(searchInput){
+      searchInput.addEventListener('input',()=>{
+        currentJournalSearch=searchInput.value;
+        document.getElementById('dreamListContainer').innerHTML=renderDreamList(currentJournalFilter,currentJournalSearch);
+        loadImagesIntoDOM(dreamsCache.map(d=>d.id),document.getElementById('dreamListContainer'));
+      });
+    }
+    document.querySelectorAll('[data-filter]').forEach(chip=>{
+      chip.addEventListener('click',()=>{
+        document.querySelectorAll('[data-filter]').forEach(c=>c.classList.remove('selected'));
+        chip.classList.add('selected');
+        currentJournalFilter=chip.dataset.filter;
+        currentJournalSearch=searchInput?searchInput.value:'';
+        document.getElementById('dreamListContainer').innerHTML=renderDreamList(currentJournalFilter,currentJournalSearch);
+        loadImagesIntoDOM(dreamsCache.map(d=>d.id),document.getElementById('dreamListContainer'));
+      });
+    });
+  }
+  if(page==='reality-check'){
+    (async()=>{
+      const rc=await getSetting('rcReminders',{enabled:false,times:['08:00','14:00','20:00']});
+      const toggle=document.getElementById('rcToggle');
+      if(toggle){toggle.checked=rc.enabled;toggle.addEventListener('change',async()=>{rc.enabled=toggle.checked;await putSetting('rcReminders',rc);});}
+      const timesDiv=document.getElementById('rcTimes');
+      if(timesDiv){timesDiv.innerHTML=rc.times.map((t,i)=>`<input type="time" value="${t}" data-rc-time="${i}" aria-label="Reminder time ${i+1}" style="max-width:120px;">`).join('')+`<button class="btn btn-secondary btn-sm" onclick="addRCReminder()">+ Add time</button>`;
+      timesDiv.querySelectorAll('[data-rc-time]').forEach(input=>{input.addEventListener('change',async()=>{const idx=parseInt(input.dataset.rcTime);rc.times[idx]=input.value;await putSetting('rcReminders',rc);});});}
+    })();
+  }
+  if(page==='constellation'){
+    const container=document.getElementById('constellationContainer');
+    if(container){
+      const tooltip=document.getElementById('constTooltip');
+      container.querySelectorAll('.constellation-star').forEach(star=>{
+        star.addEventListener('mouseenter',e=>{
+          tooltip.textContent=star.dataset.title;
+          tooltip.style.display='block';
+          const rect=container.getBoundingClientRect();
+          tooltip.style.left=(e.clientX-rect.left+12)+'px';
+          tooltip.style.top=(e.clientY-rect.top-30)+'px';
+        });
+        star.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
+        star.addEventListener('mousemove',e=>{
+          const rect=container.getBoundingClientRect();
+          tooltip.style.left=(e.clientX-rect.left+12)+'px';
+          tooltip.style.top=(e.clientY-rect.top-30)+'px';
+        });
+      });
+    }
+  }
+}
+
+async function addRCReminder(){
+  const rc=await getSetting('rcReminders',{enabled:false,times:['08:00','14:00','20:00']});
+  if(rc.times.length>=8){showToast('Maximum 8 reminder times','alert-circle');return;}
+  rc.times.push('12:00');await putSetting('rcReminders',rc);await renderPage(currentPage);
+}
+
+// ==================== ONBOARDING ====================
+function showOnboarding() {
+  const overlay=document.getElementById('onboardingOverlay');
+  const steps=[
+    {title:'Welcome to LucidLog',desc:'Your personal companion for exploring lucid dreaming. Learn techniques, track your dreams, and unlock awareness within your dreams.',icon:'moon'},
+    {title:'Record Your Dreams',desc:'Keep a dream journal to improve recall and identify patterns. The more you remember, the easier it becomes to recognise when you\'re dreaming.',icon:'book-open'},
+    {title:'Practice Reality Checks',desc:'Build the habit of questioning your reality throughout the day. This habit carries into your dreams, triggering lucidity when something doesn\'t add up.',icon:'scan-eye'},
+    {title:'Evening Ritual',desc:'Each night, review your dream signs, set a MILD intention, and optionally set a WBTB alarm. This pre-sleep routine is the bridge to lucidity.',icon:'sunset'}
+  ];
+  let step=0;
+  function renderStep(){
+    overlay.style.display='flex'; overlay.className='onboarding-overlay';
+    overlay.innerHTML=`<div class="onboarding-card"><i data-lucide="${steps[step].icon}" style="width:44px;height:44px;color:var(--accent);margin:0 auto 18px;display:block;"></i><h2>${steps[step].title}</h2><p>${steps[step].desc}</p><div class="onboarding-steps">${steps.map((_,i)=>`<div class="onboarding-dot${i===step?' active':''}"></div>`).join('')}</div><div style="display:flex;gap:10px;justify-content:center;">${step>0?'<button class="btn btn-secondary" onclick="onboardBack()">Back</button>':''}${step<steps.length-1?'<button class="btn btn-primary" onclick="onboardNext()">Next</button>':'<button class="btn btn-primary" onclick="onboardComplete()">Get Started</button>'}</div></div>`;
+    lucide.createIcons({nodes:[overlay]});
+  }
+  window.onboardNext=()=>{step++;renderStep();};
+  window.onboardBack=()=>{step--;renderStep();};
+  window.onboardComplete=async()=>{await putSetting('onboardingComplete',true);overlay.style.display='none';};
+  renderStep();
+}
+
+// ==================== SCHEDULE EVENING RITUAL NOTIFICATION ====================
+function scheduleRitualNotification() {
+  (async()=>{
+    const ritualTime = await getSetting('ritualTime','22:00');
+    const rcSetup = await getSetting('rcNotifSetup', { technique:'fingers', frequency:5, enabled:false });
+    if(!rcSetup.enabled) return;
+    const [h,m] = ritualTime.split(':').map(Number);
+    const now = new Date();
+    const fireTime = new Date(now);
+    fireTime.setHours(h,m,0,0);
+    let delay = fireTime.getTime() - now.getTime();
+    if(delay < 0) delay += 86400000; // Tomorrow
+    setTimeout(async()=>{
+      if('Notification' in window && Notification.permission === 'granted'){
+        new Notification('LucidLog — Evening Ritual', {
+          body: 'Time for your pre-sleep ritual. Review dream signs and set your intention.',
+          icon: window.__MOON_ICON_512 || '',
+          tag: 'lucidlog-ritual'
+        });
+      } else {
+        showToast('Time for your evening ritual. Tap to begin.', 'sunset');
+      }
+    }, delay);
+  })();
+}
+
+// ==================== INIT ====================
+async function init() {
+  createStarField();
+  await openDB();
+  await migrateFromLocalStorage();
+  await refreshCache();
+  const onboardingDone = await getSetting('onboardingComplete', false);
+  if (!onboardingDone) showOnboarding();
+  navigate('dashboard');
+  retryPendingImages();
+  scheduleRitualNotification();
+  // Auto-start RC notifications if previously enabled
+  const rcSetup = await getSetting('rcNotifSetup', { technique:'fingers', frequency:5, enabled:false });
+  if(rcSetup.enabled) {
+    const opt = RC_NOTIF_OPTIONS.find(o=>o.id===rcSetup.technique) || RC_NOTIF_OPTIONS[0];
+    if('Notification' in window && Notification.permission === 'granted') {
+      schedulePushRCReminders(opt, rcSetup.frequency);
+    } else {
+      scheduleInAppRCReminders(opt, rcSetup.frequency);
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+<!-- Inline Service Worker for PWA (must be at end of body) -->
+<script>
+(function(){
+  if (!('serviceWorker' in navigator)) return;
+  const SW_CODE = `
+    const CACHE = 'lucidlog-v3';
+    self.addEventListener('install', e =>
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/']))));
+    self.addEventListener('activate', e =>
+      e.waitUntil(clients.claim()));
+    self.addEventListener('fetch', e =>
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+  `;
+  try {
+    const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(blob));
+  } catch(e) { console.warn('SW registration failed', e); }
+})();
+</script>
+</body>
+</html>
