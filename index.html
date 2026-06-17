@@ -995,6 +995,246 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
   }
 }
 
+
+/* ========== IMAGE GENERATION (v5) ========== */
+.dream-thumb-img.procedural, .dream-banner.procedural {
+  filter: saturate(0.85) brightness(0.95);
+}
+.dream-banner-fallback, .dream-banner-shimmer { position: relative; }
+.banner-loading-label, .banner-style-label {
+  position: absolute; bottom: 8px; right: 12px;
+  font-size: 0.72rem; color: var(--accent-bright);
+  background: rgba(13,27,42,0.7); backdrop-filter: blur(6px);
+  padding: 3px 8px; border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none;
+  animation: fadeIn 0.4s ease;
+}
+.banner-loading-label::before {
+  content: '';
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--accent);
+  margin-right: 6px; vertical-align: middle;
+  animation: pulseGlow 1.2s ease-in-out infinite;
+}
+.banner-style-label {
+  background: rgba(245,217,122,0.15);
+  color: var(--gold-bright);
+  border: 1px solid rgba(245,217,122,0.3);
+}
+.thumb-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--surface), rgba(159,234,232,0.08));
+}
+
+
+/* ========== DREAM IMAGE GALLERY (v4) ========== */
+.dream-gallery {
+  display: flex; gap: 6px; margin-top: 10px; overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.dream-gallery-thumb {
+  flex-shrink: 0; width: 60px; height: 40px;
+  border-radius: 6px; overflow: hidden; cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--dur-fast) var(--ease-spring-soft);
+  position: relative;
+}
+.dream-gallery-thumb img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.dream-gallery-thumb:hover {
+  transform: translateY(-2px) scale(1.05);
+  border-color: var(--accent);
+}
+.dream-gallery-thumb.active {
+  border-color: var(--accent-bright);
+  box-shadow: 0 0 12px rgba(159,234,232,0.4);
+}
+.dream-gallery-thumb .thumb-style-tag {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  font-size: 0.55rem; color: var(--text);
+  background: rgba(13,27,42,0.85); text-align: center;
+  padding: 1px 0; text-overflow: ellipsis; overflow: hidden;
+  white-space: nowrap;
+}
+.dream-gallery-add {
+  flex-shrink: 0; width: 60px; height: 40px;
+  border-radius: 6px; cursor: pointer;
+  border: 2px dashed var(--card-border);
+  background: var(--mist);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  transition: all var(--dur-fast) var(--ease-spring-soft);
+}
+.dream-gallery-add:hover {
+  border-color: var(--accent); color: var(--accent);
+  transform: translateY(-2px);
+}
+.gallery-generate-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(159,234,232,0.15) 0%, rgba(159,234,232,0.08) 100%);
+  border: 1px solid rgba(159,234,232,0.3);
+  border-radius: var(--radius-pill);
+  color: var(--accent); cursor: pointer;
+  font-size: 0.82rem; font-weight: 500;
+  transition: all var(--dur-fast) var(--ease-spring-soft);
+}
+.gallery-generate-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(159,234,232,0.2);
+}
+
+
+/* ========== IMAGE GENERATION UI (v5) ========== */
+.style-picker-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 10px; margin: 18px 0;
+}
+.style-picker-card {
+  position: relative; padding: 14px; cursor: pointer;
+  border: 2px solid var(--card-border); border-radius: var(--radius-sm);
+  background: var(--card-bg); transition: all var(--dur-fast) var(--ease-spring-soft);
+  overflow: hidden;
+}
+.style-picker-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(159,234,232,0.2);
+}
+.style-picker-card.selected {
+  border-color: var(--accent-bright);
+  background: linear-gradient(135deg, rgba(159,234,232,0.18) 0%, rgba(159,234,232,0.06) 100%);
+  box-shadow: 0 0 16px rgba(159,234,232,0.3);
+}
+.style-picker-card .style-preview {
+  height: 40px; border-radius: 6px; margin-bottom: 8px;
+  position: relative; overflow: hidden;
+}
+.style-picker-card .style-name {
+  font-family: 'Lora', serif; font-weight: 600;
+  font-size: 0.92rem; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.style-picker-card .style-desc {
+  font-size: 0.74rem; color: var(--muted);
+  margin-top: 2px; line-height: 1.4;
+}
+.style-picker-card .style-check {
+  position: absolute; top: 8px; right: 8px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent-bright); color: var(--bg);
+  display: none; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+}
+.style-picker-card.selected .style-check { display: flex; }
+
+/* Style preview gradients (one per style) */
+.style-preview-watercolour_comic {
+  background: linear-gradient(135deg, #9FEAE8 0%, #5FBDB9 30%, #152238 70%, #0D1B2A 100%);
+}
+.style-preview-oil_dreamscape {
+  background: linear-gradient(135deg, #F5D97A 0%, #C9A040 30%, #5C4A2E 70%, #1B2A45 100%);
+}
+.style-preview-ghibli {
+  background: linear-gradient(135deg, #B8F5F3 0%, #FFE08A 40%, #9FEAE8 70%, #5FBDB9 100%);
+}
+.style-preview-cyberpunk_neon {
+  background: linear-gradient(135deg, #F87171 0%, #B794F4 30%, #1B2A45 70%, #0D1B2A 100%);
+}
+.style-preview-botanical_vintage {
+  background: linear-gradient(135deg, #C9A040 0%, #5FBDB9 30%, #5C4A2E 70%, #F5E6C8 100%);
+}
+.style-preview-surreal_dali {
+  background: linear-gradient(135deg, #FFE08A 0%, #F87171 30%, #5FBDB9 70%, #1B2A45 100%);
+}
+.style-preview-minimalist_ink {
+  background: linear-gradient(135deg, #F5E6C8 0%, #C9A040 30%, #1B2A45 70%, #0D1B2A 100%);
+}
+.style-preview-cosmic_vision {
+  background: linear-gradient(135deg, #B794F4 0%, #9FEAE8 30%, #1B2A45 70%, #0D1B2A 100%);
+}
+
+/* Prompt preview */
+.prompt-preview-modal textarea {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  min-height: 200px; line-height: 1.5;
+  background: rgba(13,27,42,0.6);
+}
+
+/* Progress indicator */
+.image-progress-overlay {
+  position: absolute; inset: 0;
+  background: rgba(13,27,42,0.7); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px;
+  z-index: 5; border-radius: inherit;
+  animation: fadeIn 0.3s ease;
+}
+.image-progress-overlay .progress-text {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  color: var(--accent-bright); letter-spacing: 0.05em;
+}
+.image-progress-overlay .progress-bar {
+  width: 60%; height: 3px; background: var(--mist); border-radius: 2px; overflow: hidden;
+}
+.image-progress-overlay .progress-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent-deep), var(--accent-bright));
+  width: 0%; animation: progressShimmer 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(159,234,232,0.6);
+}
+@keyframes progressShimmer {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* Lightbox */
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 280;
+  background: rgba(13,27,42,0.92); backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px; padding: 24px;
+  animation: fadeIn 0.3s ease;
+}
+.lightbox-img {
+  max-width: 90vw; max-height: 75vh;
+  border-radius: var(--radius); box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: scaleIn 0.4s var(--ease-spring);
+}
+.lightbox-controls {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.lightbox-meta {
+  font-size: 0.78rem; color: var(--muted); text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.lightbox-close {
+  position: absolute; top: 20px; right: 20px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--card-border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text);
+  transition: all var(--dur-fast) var(--ease-spring-soft);
+}
+.lightbox-close:hover { background: var(--accent-dim); color: var(--accent); }
+
+
+/* ========== BANNER ASPECT RATIOS (v5) ========== */
+.dream-banner { object-fit: cover; width: 100%; display: block; border-radius: var(--radius-sm); }
+/* Banner adapts to natural image aspect ratio, but constrained by max-height */
+.dream-banner-fallback {
+  width: 100%; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--surface), rgba(159,234,232,0.12));
+}
+/* For square/portrait images, the banner takes more vertical space */
+.modal .dream-banner { max-height: 60vh; }
+
 /* ========== LAYOUT ========== */
 .app-shell { position: relative; z-index: 1; display: flex; min-height: 100dvh; }
 .sidebar {
@@ -1869,7 +2109,7 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
 
 // ==================== IndexedDB SETUP ====================
 const DB_NAME = 'lucidlog-db';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 let db = null;
 
 async function openDB() {
@@ -1887,6 +2127,8 @@ async function openDB() {
         database.createObjectStore('bookmarks', { keyPath: 'techniqueId' });
       if (!database.objectStoreNames.contains('dream_images'))
         database.createObjectStore('dream_images', { keyPath: 'dreamId' });
+      // v4: upgrade dream_images to support multiple images per dream
+      // Existing records (keyed by dreamId) get migrated lazily on access.
       if (!database.objectStoreNames.contains('achievements'))
         database.createObjectStore('achievements', { keyPath: 'id' });
       if (!database.objectStoreNames.contains('intentions'))
@@ -1904,6 +2146,13 @@ async function openDB() {
       if (!database.objectStoreNames.contains('sleep_logs')) {
         const sl = database.createObjectStore('sleep_logs', { keyPath: 'date' });
         sl.createIndex('date', 'date');
+      }
+      // v4: new dream_images_v2 store — multi-image gallery
+      // Each record: { id (imageId), dreamId, url, provider, prompt, style, scene, generatedAt, procedural, isPrimary }
+      if (!database.objectStoreNames.contains('dream_images_v2')) {
+        const dv2 = database.createObjectStore('dream_images_v2', { keyPath: 'id' });
+        dv2.createIndex('dreamId', 'dreamId');
+        dv2.createIndex('generatedAt', 'generatedAt');
       }
     }
   });
@@ -1958,6 +2207,108 @@ async function getIntention(date) {
 }
 async function putIntention(rec) {
   try { await (await openDB()).put('intentions', rec); } catch(e) { console.error('putIntention', e); }
+}
+
+
+
+// ==================== MULTI-IMAGE GALLERY (v4) ====================
+async function getAllDreamImages(dreamId) {
+  try {
+    const d = await openDB();
+    // Try v2 store first
+    if (d.objectStoreNames.contains('dream_images_v2')) {
+      const idx = d.transaction('dream_images_v2').store.index('dreamId');
+      const all = await idx.getAll(dreamId);
+      if (all && all.length) {
+        // Sort: primary first, then by generatedAt desc
+        return all.sort((a, b) => {
+          if (a.isPrimary && !b.isPrimary) return -1;
+          if (!a.isPrimary && b.isPrimary) return 1;
+          return (b.generatedAt || 0) - (a.generatedAt || 0);
+        });
+      }
+    }
+    // Fallback: read from legacy store
+    const legacy = await getDreamImage(dreamId);
+    if (legacy && legacy.url) {
+      return [{ ...legacy, id: 'legacy_' + dreamId, dreamId, isPrimary: true }];
+    }
+    return [];
+  } catch (e) {
+    console.error('getAllDreamImages', e);
+    return [];
+  }
+}
+
+async function getPrimaryDreamImage(dreamId) {
+  const all = await getAllDreamImages(dreamId);
+  return all[0] || null;
+}
+
+async function addDreamImage(dreamId, record) {
+  try {
+    const d = await openDB();
+    if (!d.objectStoreNames.contains('dream_images_v2')) return;
+    // Generate imageId if not provided
+    const imageId = record.id || 'img_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    // Check if this is the first image for this dream -> mark as primary
+    const existing = await getAllDreamImages(dreamId);
+    const isPrimary = existing.length === 0;
+    const full = {
+      id: imageId,
+      dreamId,
+      url: record.url,
+      provider: record.provider || 'unknown',
+      prompt: record.prompt || '',
+      style: record.style || '',
+      scene: record.scene || '',
+      generatedAt: record.generatedAt || Date.now(),
+      procedural: !!record.procedural,
+      isPrimary,
+    };
+    await d.put('dream_images_v2', full);
+    return imageId;
+  } catch (e) { console.error('addDreamImage', e); }
+}
+
+async function deleteDreamImageV2(imageId) {
+  try {
+    const d = await openDB();
+    if (d.objectStoreNames.contains('dream_images_v2')) {
+      await d.delete('dream_images_v2', imageId);
+    }
+  } catch (e) { console.error('deleteDreamImageV2', e); }
+}
+
+async function deleteAllDreamImages(dreamId) {
+  try {
+    const d = await openDB();
+    if (d.objectStoreNames.contains('dream_images_v2')) {
+      const idx = d.transaction('dream_images_v2').store.index('dreamId');
+      const all = await idx.getAll(dreamId);
+      const tx = d.transaction('dream_images_v2', 'readwrite');
+      for (const img of all) tx.objectStore('dream_images_v2').delete(img.id);
+      await tx.done;
+    }
+    // Also clear legacy
+    await deleteDreamImage(dreamId);
+  } catch (e) { console.error('deleteAllDreamImages', e); }
+}
+
+async function setPrimaryDreamImage(imageId) {
+  try {
+    const d = await openDB();
+    if (!d.objectStoreNames.contains('dream_images_v2')) return;
+    const rec = await d.get('dream_images_v2', imageId);
+    if (!rec) return;
+    // Unmark all other images for this dream
+    const all = await getAllDreamImages(rec.dreamId);
+    const tx = d.transaction('dream_images_v2', 'readwrite');
+    for (const img of all) {
+      tx.objectStore('dream_images_v2').put({ ...img, isPrimary: img.id === imageId });
+    }
+    await tx.done;
+  } catch (e) { console.error('setPrimaryDreamImage', e); }
 }
 
 // ==================== MIGRATION (localStorage → IndexedDB) ====================
@@ -2666,29 +3017,999 @@ document.addEventListener('click',e=>{const l=e.target.closest('[data-page]');if
 // ==================== ESCAPE HTML ====================
 function escapeHtml(t){const d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
 
-// ==================== IMAGE PROMPT BUILDER ====================
-function buildImagePrompt(dream) {
-  const level = dream.lucidityLevel || 0;
-  const type = level>=4?'fully lucid dream':level>=2?'semi-lucid dream':'vivid dream';
-  const mood = (dream.emotions && dream.emotions.length) ? dream.emotions.join(', ') : 'mysterious, ethereal';
-  const scene = (dream.narrative||'').slice(0,120);
-  return [
-    '2-panel comic strip, watercolour and ink illustration,',
-    `depicting a ${type} titled "${dream.title}".`,
-    `Mood: ${mood}. Scene: ${scene}.`,
-    'Teal and midnight navy colour palette. Surreal, ethereal.',
-    'Field guide illustration aesthetic. No text. No speech bubbles.'
-  ].join(' ');
+// ==================== IMAGE PROVIDER SYSTEM (v5) ====================
+// Pluggable provider registry. Each provider has:
+//   id, name, generate(prompt, opts) -> Promise<{url, width, height, meta}>, reliability score
+// generateDreamImage() tries providers in order, falls back to SVG generator.
+
+const IMAGE_PROVIDERS = [
+  {
+    id: 'pollinations-flux',
+    name: 'Pollinations Flux',
+    endpoint: 'https://image.pollinations.ai/prompt/',
+    model: 'flux',
+    reliability: 0.85,
+    avgLatency: 8000,
+  },
+  {
+    id: 'pollinations-turbo',
+    name: 'Pollinations Turbo',
+    endpoint: 'https://image.pollinations.ai/prompt/',
+    model: 'turbo',
+    reliability: 0.75,
+    avgLatency: 4000,
+  },
+];
+
+// In-memory latency tracker (resets per session)
+const __providerStats = {};
+function recordProviderAttempt(providerId, success, latencyMs) {
+  if (!__providerStats[providerId]) __providerStats[providerId] = { attempts: 0, successes: 0, totalLatency: 0 };
+  const s = __providerStats[providerId];
+  s.attempts++;
+  if (success) s.successes++;
+  s.totalLatency += latencyMs;
+}
+function getProviderScore(providerId) {
+  const s = __providerStats[providerId];
+  if (!s || s.attempts === 0) return 1.0;
+  return s.successes / s.attempts;
 }
 
-// Update image in DOM after generation or IDB lookup
-function updateImageInDOM(dreamId, url) {
+// Build a Pollinations URL with given prompt + options
+function buildPollinationsUrl(provider, prompt, opts) {
+  const params = new URLSearchParams({
+    width: String(opts.width || 1024),
+    height: String(opts.height || 512),
+    nologo: 'true',
+    seed: opts.seed || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
+    model: provider.model,
+  });
+  return `${provider.endpoint}${encodeURIComponent(prompt)}?${params.toString()}`;
+}
+
+// Try to load an image URL with timeout. Resolves to {naturalWidth, naturalHeight} on success.
+function loadImageWithTimeout(url, timeoutMs = 45000) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      img.src = '';
+      reject(new Error('Image load timeout'));
+    }, timeoutMs);
+    img.onload = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (img.naturalWidth < 10) {
+        reject(new Error('Image too small (likely error placeholder)'));
+        return;
+      }
+      resolve({ url, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight });
+    };
+    img.onerror = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(new Error('Image load error'));
+    };
+    img.src = url;
+  });
+}
+
+// Procedural SVG fallback — generates a beautiful deterministic abstract scene from dream content.
+// NEVER fails. Used when all network providers fail or are disabled.
+function generateProceduralSVG(dream, opts = {}) {
+  const w = opts.width || 1024, h = opts.height || 512;
+  const seed = (dream.id || 'x').split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+  function rng(s) { return function() { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
+  const rand = rng(seed);
+
+  // Pick palette based on dominant emotion
+  const emotion = (dream.emotions && dream.emotions[0]) || 'Wonder';
+  const palettes = {
+    'Joy': ['#FFE08A', '#F5D97A', '#9FEAE8'],
+    'Fear': ['#3D2855', '#1B2A45', '#5FBDB9'],
+    'Wonder': ['#9FEAE8', '#B794F4', '#F5D97A'],
+    'Peace': ['#B8F5F3', '#9FEAE8', '#5FBDB9'],
+    'Anxiety': ['#5C4A6E', '#3D2855', '#9FEAE8'],
+    'Excitement': ['#FFE08A', '#F87171', '#9FEAE8'],
+    'Sadness': ['#3D5A6E', '#1B2A45', '#5FBDB9'],
+    'Confusion': ['#B794F4', '#9FEAE8', '#F5D97A'],
+    'Nostalgia': ['#C9A040', '#F5D97A', '#5FBDB9'],
+    'Awe': ['#9FEAE8', '#FFE08A', '#B794F4'],
+    'Curiosity': ['#5FBDB9', '#9FEAE8', '#FFE08A'],
+    'Love': ['#F87171', '#FFE08A', '#9FEAE8'],
+  };
+  const palette = palettes[emotion] || palettes['Wonder'];
+
+  // Build SVG with layers: bg gradient, nebula clouds, stars, central abstract shape, title text
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
+  // Defs
+  svg += `<defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="${palette[2]}" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="${palette[1]}" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#0D1B2A" stop-opacity="1"/>
+    </radialGradient>
+    <radialGradient id="cloudGrad1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${palette[0]}" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="${palette[0]}" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloudGrad2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${palette[2]}" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="${palette[2]}" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>`;
+  // Background
+  svg += `<rect width="${w}" height="${h}" fill="url(#bgGrad)"/>`;
+  // Nebula clouds
+  for (let i = 0; i < 4; i++) {
+    const cx = rand() * w, cy = rand() * h, r = 100 + rand() * 200;
+    svg += `<circle cx="${cx.toFixed(0)}" cy="${cy.toFixed(0)}" r="${r.toFixed(0)}" fill="url(#cloudGrad${i%2+1})" filter="url(#glow)"/>`;
+  }
+  // Stars
+  for (let i = 0; i < 80; i++) {
+    const x = rand() * w, y = rand() * h, r = 0.5 + rand() * 1.8, o = 0.2 + rand() * 0.7;
+    svg += `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}" fill="${palette[0]}" opacity="${o.toFixed(2)}"/>`;
+  }
+  // Central abstract shape (varies by lucidity)
+  const isLucid = dream.isLucid;
+  if (isLucid) {
+    // Concentric rings for lucid dreams
+    const cx = w/2, cy = h/2;
+    for (let i = 0; i < 5; i++) {
+      const r = 30 + i * 25;
+      svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${palette[0]}" stroke-width="1.5" opacity="${0.5 - i*0.08}"/>`;
+    }
+    svg += `<circle cx="${cx}" cy="${cy}" r="20" fill="${palette[0]}" opacity="0.6" filter="url(#glow)"/>`;
+  } else {
+    // Abstract flowing curves for non-lucid
+    let path = `M ${rand()*w} ${rand()*h}`;
+    for (let i = 0; i < 5; i++) {
+      const x1 = rand()*w, y1 = rand()*h, x2 = rand()*w, y2 = rand()*h;
+      path += ` Q ${x1.toFixed(0)} ${y1.toFixed(0)}, ${x2.toFixed(0)} ${y2.toFixed(0)}`;
+    }
+    svg += `<path d="${path}" fill="none" stroke="${palette[0]}" stroke-width="2" opacity="0.5" filter="url(#glow)"/>`;
+  }
+  // Title text
+  if (dream.title) {
+    svg += `<text x="${w/2}" y="${h - 40}" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-style="italic" fill="${palette[0]}" opacity="0.85" filter="url(#glow)">${escapeHtml(dream.title).slice(0, 40)}</text>`;
+  }
+  // Phase marker
+  const moon = getMoonPhase();
+  svg += `<text x="20" y="30" font-family="monospace" font-size="11" fill="${palette[0]}" opacity="0.5">${moon.name} &middot; ${escapeHtml(emotion)}</text>`;
+  svg += `</svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+// Main orchestrator: tries providers in order, falls back to SVG.
+// opts: { width, height, seed, style, prompt, onProgress }
+async function generateDreamImage(dreamId, options = {}) {
+  // Determine dimensions from aspect ratio (or explicit width/height override)
+  let width = options.width;
+  let height = options.height;
+  if (!width || !height) {
+    const aspectRatioId = options.aspectRatio || (await getSetting('imageAspectRatio', 'banner'));
+    const dims = await getImageDimensions(aspectRatioId);
+    width = dims.width;
+    height = dims.height;
+  }
+  const opts = Object.assign({
+    width, height,
+    seed: dreamId + '-' + Date.now().toString(36),
+    style: null,  // chosen style key
+    prompt: null, // pre-built prompt
+    onProgress: () => {},
+  }, options);
+  opts.width = width;
+  opts.height = height;
+
+  const dream = await getDream(dreamId);
+  if (!dream) return null;
+
+  // Build prompt if not provided
+  const prompt = opts.prompt || buildImagePrompt(dream, { style: opts.style, sceneIndex: opts.sceneIndex });
+
+  opts.onProgress('composing');
+  // Try each provider
+  // Order by reliability (most successful first), then by avg latency
+  const providers = [...IMAGE_PROVIDERS].sort((a, b) => {
+    const sa = getProviderScore(a.id) * 0.7 + (1 / (a.avgLatency / 1000)) * 0.3;
+    const sb = getProviderScore(b.id) * 0.7 + (1 / (b.avgLatency / 1000)) * 0.3;
+    return sb - sa;
+  });
+
+  for (let i = 0; i < providers.length; i++) {
+    const provider = providers[i];
+    if (!navigator.onLine) break;
+    opts.onProgress('rendering', provider.name);
+    const url = buildPollinationsUrl(provider, prompt, opts);
+    const start = Date.now();
+    try {
+      const result = await loadImageWithTimeout(url, 45000);
+      const latency = Date.now() - start;
+      recordProviderAttempt(provider.id, true, latency);
+      return {
+        url: result.url,
+        provider: provider.id,
+        prompt,
+        style: opts.style,
+        width: opts.width,
+        height: opts.height,
+        generatedAt: Date.now(),
+        procedural: false,
+      };
+    } catch (e) {
+      const latency = Date.now() - start;
+      recordProviderAttempt(provider.id, false, latency);
+      console.warn(`Provider ${provider.id} failed:`, e.message);
+      // try next provider
+    }
+  }
+
+  // All network providers failed (or offline) — generate procedural SVG
+  opts.onProgress('fallback');
+  const svgUrl = generateProceduralSVG(dream, opts);
+  return {
+    url: svgUrl,
+    provider: 'procedural-svg',
+    prompt,
+    style: opts.style || 'procedural',
+    width: opts.width,
+    height: opts.height,
+    generatedAt: Date.now(),
+    procedural: true,
+  };
+}
+
+// ==================== EMOTION COLOR MAPPING (v5) ====================
+// Each emotion has a full palette spec used to drive the image generation palette.
+const EMOTION_PALETTES = {
+  'Joy': {
+    primary: 'warm gold', secondary: 'soft amber', accent: 'cream white',
+    saturation: 'vibrant and luminous',
+    lighting: 'warm golden-hour radiance, sunbeams',
+    elements: 'floating motes of light, gentle bloom, radiant highlights',
+    bg: 'soft cream and pale gold',
+  },
+  'Fear': {
+    primary: 'deep crimson', secondary: 'shadowed violet', accent: 'cold steel blue',
+    saturation: 'high contrast, dramatic',
+    lighting: 'ominous single-source lighting, deep shadows',
+    elements: 'looming silhouettes, fog, distorted shapes, harsh contrast',
+    bg: 'midnight black with crimson undertones',
+  },
+  'Wonder': {
+    primary: 'bioluminescent teal', secondary: 'cosmic violet', accent: 'shimmering gold',
+    saturation: 'pearlescent, ethereal',
+    lighting: 'soft inner glow, sparkling highlights',
+    elements: 'drifting sparkles, floating particles, sense of vast scale',
+    bg: 'deep space navy with nebula glow',
+  },
+  'Peace': {
+    primary: 'soft sage', secondary: 'misty blue', accent: 'cream',
+    saturation: 'muted, gentle',
+    lighting: 'soft diffused daylight, even illumination',
+    elements: 'gentle mist, calm water, soft focus',
+    bg: 'pale dawn blue and soft green',
+  },
+  'Anxiety': {
+    primary: 'sickly yellow-green', secondary: 'muddy brown', accent: 'harsh red',
+    saturation: 'queasy, oversaturated',
+    lighting: 'flickering fluorescent, harsh shadows',
+    elements: 'distorted perspectives, claustrophobic framing, jagged edges',
+    bg: 'oppressive grey-green murk',
+  },
+  'Excitement': {
+    primary: 'electric magenta', secondary: 'vivid cyan', accent: 'bright yellow',
+    saturation: 'explosively vibrant',
+    lighting: 'dynamic neon glow, energetic highlights',
+    elements: 'motion blur, energy trails, sparks',
+    bg: 'dark with electric neon bursts',
+  },
+  'Sadness': {
+    primary: 'muted blue-grey', secondary: 'faded indigo', accent: 'pale silver',
+    saturation: 'desaturated, melancholic',
+    lighting: 'soft overcast light, gentle rain',
+    elements: 'falling rain, misty distance, downcast mood',
+    bg: 'slate grey and pale indigo',
+  },
+  'Confusion': {
+    primary: 'muddy purple', secondary: 'conflicting orange', accent: 'jarring teal',
+    saturation: 'discordant',
+    lighting: 'shifting unreal illumination',
+    elements: 'impossible geometry, fragmented reflections, Escher-like',
+    bg: 'shifting muddled hues',
+  },
+  'Nostalgia': {
+    primary: 'sepia brown', secondary: 'faded gold', accent: 'dusty rose',
+    saturation: 'warm muted, film-grain',
+    lighting: 'hazy afternoon sun, soft bloom',
+    elements: 'dust motes, faded edges, vignette',
+    bg: 'aged sepia and warm cream',
+  },
+  'Awe': {
+    primary: 'cosmic gold', secondary: 'celestial blue', accent: 'pearlescent white',
+    saturation: 'sublime and luminous',
+    lighting: 'monumental god-rays, vast atmospheric depth',
+    elements: 'towering scale, distant vista, breath-taking scope',
+    bg: 'infinite deep blue with golden accents',
+  },
+  'Curiosity': {
+    primary: 'intriguing teal', secondary: 'mysterious violet', accent: 'warm amber',
+    saturation: 'inviting, rich',
+    lighting: 'focused pool of light in darkness',
+    elements: 'intricate details, mysterious doorways, inviting paths',
+    bg: 'twilight indigo with warm highlights',
+  },
+  'Love': {
+    primary: 'rose pink', secondary: 'warm gold', accent: 'soft white',
+    saturation: 'tender, glowing',
+    lighting: 'rose-gold warmth, soft bokeh',
+    elements: 'gentle blur, floating petals, intimate framing',
+    bg: 'warm rose and soft cream',
+  },
+};
+
+function getEmotionPalette(emotions) {
+  if (!emotions || !emotions.length) return EMOTION_PALETTES['Wonder'];
+  // Use the first emotion with a known palette
+  for (const e of emotions) {
+    if (EMOTION_PALETTES[e]) return EMOTION_PALETTES[e];
+  }
+  return EMOTION_PALETTES['Wonder'];
+}
+
+function buildPaletteString(emotions, timeOfDay, isLucid) {
+  const palette = getEmotionPalette(emotions);
+  // Base palette from emotion
+  let str = `${palette.primary}, ${palette.secondary}, with ${palette.accent} accents`;
+  // Saturation modifier based on lucidity
+  if (isLucid) {
+    str += ', hyperreal saturated contrast';
+  } else {
+    str += `, ${palette.saturation}`;
+  }
+  // Background tone from time of night
+  str += `. Background: ${palette.bg}`;
+  return str;
+}
+
+function buildLightingString(emotions, isLucid) {
+  const palette = getEmotionPalette(emotions);
+  if (isLucid) {
+    return `luminous inner glow, volumetric lighting, ${palette.lighting.toLowerCase()}`;
+  }
+  return palette.lighting.toLowerCase();
+}
+
+function buildVisualElementsString(emotions) {
+  const palette = getEmotionPalette(emotions);
+  return palette.elements;
+}
+
+// ==================== SMART SCENE EXTRACTION (v5) ====================
+// Split narrative into sentences, score by "visualness", pick the most painterly ones.
+
+function splitSentences(text) {
+  if (!text) return [];
+  // Handle common abbreviations to avoid false splits
+  const cleaned = text.replace(/\b(Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e)\./g, '$1<DOT>');
+  // Split on . ! ? followed by space + capital letter, or newline
+  const parts = cleaned.split(/(?<=[.!?])\s+(?=[A-Z"])|\n+/);
+  return parts
+    .map(s => s.replace(/<DOT>/g, '.').trim())
+    .filter(s => s.length > 15 && s.length < 400);
+}
+
+function scoreSentenceVisualness(sentence) {
+  if (!sentence) return 0;
+  const text = sentence.toLowerCase();
+  let score = 0;
+
+  // Visual nouns (high weight)
+  for (const key of Object.keys(VISUAL_NOUNS)) {
+    const re = new RegExp('\\b' + key + 's?\\b', 'i');
+    if (re.test(text)) score += 15;
+  }
+
+  // Visual adjectives (medium weight)
+  for (const key of Object.keys(VISUAL_ADJECTIVES)) {
+    const re = new RegExp('\\b' + key + '\\b', 'i');
+    if (re.test(text)) score += 8;
+  }
+
+  // Action verbs (medium weight)
+  const actionVerbs = ['flew','flying','fell','falling','ran','running','swam','swimming','danced','dancing',
+    'floated','floating','climbed','climbing','jumped','jumping','flew','soared','plummeted','sank','rose',
+    'turned','transformed','appeared','vanished','emerged','glowed','shimmered','whispered','called'];
+  for (const v of actionVerbs) {
+    if (text.includes(v)) score += 10;
+  }
+
+  // Sensory words (light, sound, texture)
+  const sensoryWords = ['light','dark','bright','shadow','glow','glowing','shimmer','sparkle','glisten',
+    'gold','silver','crystal','glass','mirror','mist','fog','rain','snow','wind','fire','smoke','steam',
+    'loud','silent','quiet','roar','whisper','sing','echo','cold','warm','hot','wet','dry','soft','hard',
+    'smooth','rough','sharp','blunt'];
+  for (const w of sensoryWords) {
+    if (text.includes(w)) score += 5;
+  }
+
+  // Colors (high weight)
+  const colors = ['red','blue','green','yellow','purple','orange','pink','black','white','gold','silver',
+    'crimson','azure','emerald','violet','scarlet','teal','navy','cream','ivory','obsidian'];
+  for (const c of colors) {
+    if (text.includes(c)) score += 8;
+  }
+
+  // Numbers + size descriptors
+  if (/\b(huge|tiny|massive|enormous|gigantic|microscopic|infinite|vast|towering)\b/.test(text)) score += 10;
+
+  // Penalty: too generic
+  const generic = ['i was','i am','then i','and then','suddenly','i saw','i went','i walked','i came'];
+  for (const g of generic) {
+    if (text.startsWith(g)) score -= 3;
+  }
+
+  // Length bonus: longer sentences tend to be more descriptive
+  if (sentence.length > 60) score += 5;
+  if (sentence.length > 120) score += 5;
+
+  return Math.max(0, Math.min(100, score));
+}
+
+function extractDreamScenes(narrative, maxScenes = 3) {
+  const sentences = splitSentences(narrative);
+  if (!sentences.length) return [];
+
+  // Score each
+  const scored = sentences.map(s => ({
+    text: s,
+    score: scoreSentenceVisualness(s),
+    keywords: extractVisualKeywords(s),
+  }));
+
+  // Sort by score desc, take top N
+  const top = scored.sort((a, b) => b.score - a.score).slice(0, maxScenes);
+
+  // Re-sort by original order (so scenes flow chronologically)
+  const topTexts = new Set(top.map(t => t.text));
+  return scored
+    .filter(s => topTexts.has(s.text))
+    .slice(0, maxScenes);
+}
+
+// ==================== DREAM TYPE TEMPLATES (v5) ====================
+const DREAM_TYPE_TEMPLATES = [
+  {
+    id: 'flying',
+    label: 'Flying Dream',
+    icon: 'feather',
+    detectRegex: /\\b(flew|flying|fly|flight|soar|soaring|airborne|wings|levitate|hover|float)\\b/i,
+    detectEmotions: ['Joy', 'Excitement', 'Awe', 'Wonder'],
+    promptAdd: 'subject suspended in mid-air, weightless flight, expansive aerial vista, sense of freedom and altitude',
+    suggestedStyle: 'cosmic_vision',
+    weight: 3,
+  },
+  {
+    id: 'chase',
+    label: 'Chase Dream',
+    icon: 'footprints',
+    detectRegex: /\\b(chase|chased|pursu|running from|fleeing|escaping|after me|hunting)\\b/i,
+    detectEmotions: ['Fear', 'Anxiety'],
+    promptAdd: 'dynamic motion, sense of pursuit and urgency, dramatic foreshortening, motion blur, tense atmosphere',
+    suggestedStyle: 'surreal_dali',
+    weight: 3,
+  },
+  {
+    id: 'water',
+    label: 'Water Dream',
+    icon: 'waves',
+    detectRegex: /\\b(ocean|sea|river|lake|swim|swimming|water|underwater|drowning|wave|tide|submerged)\\b/i,
+    detectEmotions: ['Peace', 'Fear', 'Wonder'],
+    promptAdd: 'liquid environment, refracted light through water, submerged perspective, reflective surface, fluid dynamics',
+    suggestedStyle: 'oil_dreamscape',
+    weight: 3,
+  },
+  {
+    id: 'lost_place',
+    label: 'Forgotten Place',
+    icon: 'building-2',
+    detectRegex: /\\b(abandoned|empty|forgotten|old school|childhood home|ruins|derelict|deserted|silent)\\b/i,
+    detectEmotions: ['Nostalgia', 'Sadness', 'Confusion'],
+    promptAdd: 'decaying architecture, dust-filled light beams, peeling paint, forgotten objects, melancholy atmosphere',
+    suggestedStyle: 'oil_dreamscape',
+    weight: 2,
+  },
+  {
+    id: 'visitation',
+    label: 'Visitation Dream',
+    icon: 'ghost',
+    detectRegex: /\\b(dead|deceased|passed away|grandfather|grandmother|father|mother|visit|spirit|ghost)\\b/i,
+    detectEmotions: ['Sadness', 'Peace', 'Love', 'Nostalgia'],
+    promptAdd: 'ethereal luminous figure, soft radiant glow, gentle presence, sacred atmosphere, golden halo of light',
+    suggestedStyle: 'oil_dreamscape',
+    weight: 4,
+  },
+  {
+    id: 'test',
+    label: 'Performance Dream',
+    icon: 'clipboard-check',
+    detectRegex: /\\b(test|exam|school|classroom|teacher|unprepared|fail|grade|stage|audience|perform)\\b/i,
+    detectEmotions: ['Anxiety', 'Fear'],
+    promptAdd: 'institutional setting, sense of being judged, harsh overhead lighting, exposed vulnerable subject',
+    suggestedStyle: 'surreal_dali',
+    weight: 2,
+  },
+  {
+    id: 'falling',
+    label: 'Falling Dream',
+    icon: 'arrow-down',
+    detectRegex: /\\b(fell|falling|plummet|drop|tumble|vertigo|downward)\\b/i,
+    detectEmotions: ['Fear', 'Anxiety'],
+    promptAdd: 'vertical composition, sense of vertiginous descent, motion lines, blurred ground rushing upward',
+    suggestedStyle: 'surreal_dali',
+    weight: 3,
+  },
+  {
+    id: 'transformation',
+    label: 'Transformation Dream',
+    icon: 'git-merge',
+    detectRegex: /\\b(transform|shapeshift|changed into|became|morph|turn into|metamorphosis)\\b/i,
+    detectEmotions: ['Wonder', 'Confusion', 'Fear'],
+    promptAdd: 'mid-transformation moment, morphing forms, dissolving boundaries between states, fluid identity',
+    suggestedStyle: 'surreal_dali',
+    weight: 3,
+  },
+  {
+    id: 'apocalypse',
+    label: 'Apocalypse Dream',
+    icon: 'alert-octagon',
+    detectRegex: /\\b(end of the world|apocalypse|disaster|explosion|destruction|doom|catastroph|collaps)\\b/i,
+    detectEmotions: ['Fear', 'Awe', 'Anxiety'],
+    promptAdd: 'cataclysmic scale, monumental destruction, dramatic lighting, smoke and fire, epic cinematic vista',
+    suggestedStyle: 'cyberpunk_neon',
+    weight: 3,
+  },
+  {
+    id: 'mirror_portal',
+    label: 'Mirror Portal',
+    icon: 'frame',
+    detectRegex: /\\b(mirror|reflection|through the glass|portal|doorway|step through|other side)\\b/i,
+    detectEmotions: ['Wonder', 'Curiosity', 'Confusion'],
+    promptAdd: 'reflective surface as threshold, dual worlds visible, shimmering portal edge, liminal space',
+    suggestedStyle: 'cosmic_vision',
+    weight: 3,
+  },
+];
+
+function detectDreamType(dream) {
+  if (!dream) return null;
+  const narrative = dream.narrative || '';
+  const emotions = dream.emotions || [];
+  const matches = [];
+
+  for (const template of DREAM_TYPE_TEMPLATES) {
+    let score = 0;
+    // Regex match: strong signal
+    if (template.detectRegex.test(narrative)) score += 5;
+    // Emotion match: weaker signal
+    for (const e of emotions) {
+      if (template.detectEmotions.includes(e)) score += 1;
+    }
+    // Apply template weight
+    score *= template.weight;
+    if (score > 0) matches.push({ template, score });
+  }
+
+  if (!matches.length) return null;
+  matches.sort((a, b) => b.score - a.score);
+  return matches[0].template;
+}
+
+// ==================== ASPECT RATIOS & RESOLUTION (v5) ====================
+const ASPECT_RATIOS = [
+  { id: 'banner', label: 'Banner', description: '2:1 wide cinematic', width: 1024, height: 512 },
+  { id: 'square', label: 'Square', description: '1:1 square format', width: 768, height: 768 },
+  { id: 'portrait', label: 'Portrait', description: '3:4 tall format', width: 768, height: 1024 },
+  { id: 'landscape', label: 'Landscape', description: '4:3 standard', width: 1024, height: 768 },
+];
+
+const RESOLUTION_TIERS = [
+  { id: 'standard', label: 'Standard', multiplier: 1.0 },
+  { id: 'high', label: 'High', multiplier: 1.5 },
+  { id: 'ultra', label: 'Ultra', multiplier: 2.0 },
+];
+
+function getAspectRatio(ratioId) {
+  return ASPECT_RATIOS.find(r => r.id === ratioId) || ASPECT_RATIOS[0];
+}
+
+function getResolutionTier(tierId) {
+  return RESOLUTION_TIERS.find(t => t.id === tierId) || RESOLUTION_TIERS[0];
+}
+
+async function getImageDimensions(aspectRatioId) {
+  const ratio = getAspectRatio(aspectRatioId);
+  const tier = getResolutionTier(await getSetting('imageResolutionTier', 'standard'));
+  return {
+    width: Math.round(ratio.width * tier.multiplier),
+    height: Math.round(ratio.height * tier.multiplier),
+  };
+}
+
+// ==================== ART STYLE LIBRARY (v5) ====================
+const ART_STYLES = [
+  {
+    id: 'watercolour_comic',
+    name: 'Watercolour Comic',
+    icon: 'palette',
+    description: '2-panel comic strip, watercolour and ink. Field guide aesthetic.',
+    promptPrefix: '2-panel comic strip, watercolour and ink illustration,',
+    promptSuffix: 'field guide illustration aesthetic, hand-painted quality',
+    paletteOverride: null,
+    aspectRatio: 'banner',
+  },
+  {
+    id: 'oil_dreamscape',
+    name: 'Oil Dreamscape',
+    icon: 'image',
+    description: 'Rich oil painting with romantic dreamlike atmosphere.',
+    promptPrefix: 'oil painting on canvas, romantic dreamscape,',
+    promptSuffix: 'classical oil painting, visible brushstrokes, rich textures, museum quality',
+    paletteOverride: null,
+    aspectRatio: 'banner',
+  },
+  {
+    id: 'ghibli',
+    name: 'Animated Fantasy',
+    icon: 'sparkles',
+    description: 'Soft hand-drawn animation style, warm and whimsical.',
+    promptPrefix: 'hand-drawn animation cel, soft watercolour background,',
+    promptSuffix: 'Studio Ghibli inspired, hand-drawn animation aesthetic, soft cel shading',
+    paletteOverride: null,
+    aspectRatio: 'banner',
+  },
+  {
+    id: 'cyberpunk_neon',
+    name: 'Neon Cyberpunk',
+    icon: 'zap',
+    description: 'Neon-soaked futuristic, blade-runner aesthetic.',
+    promptPrefix: 'cyberpunk digital painting, neon-lit scene,',
+    promptSuffix: 'blade-runner aesthetic, holographic glow, rain-slicked surfaces, dramatic neon contrast',
+    paletteOverride: 'electric teal and magenta neon with deep shadow',
+    aspectRatio: 'banner',
+  },
+  {
+    id: 'botanical_vintage',
+    name: 'Vintage Botanical',
+    icon: 'leaf',
+    description: 'Antique botanical illustration, scientific and ornate.',
+    promptPrefix: 'vintage botanical illustration, scientific drawing,',
+    promptSuffix: 'antique natural history illustration, fine linework, aged parchment, ornate decorative border',
+    paletteOverride: 'sepia and teal on aged parchment',
+    aspectRatio: 'banner',
+  },
+  {
+    id: 'surreal_dali',
+    name: 'Surrealist Vision',
+    icon: 'cloud',
+    description: 'Dali-esque surrealism with impossible geometry.',
+    promptPrefix: 'surrealist painting, melting dreamlike forms,',
+    promptSuffix: 'Salvador Dali inspired, impossible geometry, hyperreal detail, dream logic',
+    paletteOverride: 'golden hour warmth with deep shadows',
+    aspectRatio: 'banner',
+  },
+  {
+    id: 'minimalist_ink',
+    name: 'Minimalist Ink',
+    icon: 'pen-tool',
+    description: 'Sumi-e ink drawing, negative space, single brushstroke.',
+    promptPrefix: 'sumi-e ink drawing, minimalist composition,',
+    promptSuffix: 'Japanese ink painting, masterful brushwork, abundant negative space, single decisive stroke',
+    paletteOverride: 'black ink on cream paper with subtle teal wash',
+    aspectRatio: 'banner',
+  },
+  {
+    id: 'cosmic_vision',
+    name: 'Cosmic Vision',
+    icon: 'globe',
+    description: 'Cosmic space art with nebulae, stars, and luminous gas.',
+    promptPrefix: 'cosmic space art, nebula and stardust,',
+    promptSuffix: 'Hubble telescope inspired, vast cosmic scale, glowing nebulae, scattered star clusters',
+    paletteOverride: 'deep space black with bioluminescent teal and gold nebula',
+    aspectRatio: 'banner',
+  },
+];
+
+function getArtStyle(styleId) {
+  return ART_STYLES.find(s => s.id === styleId) || ART_STYLES[0];
+}
+
+// Choose a default style for a dream based on its content
+function chooseDefaultStyle(dream) {
+  // First: if a dream type template matched, use its suggested style (if user hasn't disabled auto-templates)
+  const dreamType = detectDreamType(dream);
+  if (dreamType && dreamType.suggestedStyle) {
+    // Still apply emotion/narrative overrides below if they're stronger
+    // (but template's suggested style is a good default)
+  }
+  const narrative = (dream.narrative || '').toLowerCase();
+  const emotions = dream.emotions || [];
+
+  // Cosmic vision for awe/wonder + space mentions
+  if (emotions.includes('Awe') && /space|stars|galaxy|cosmos|universe|nebula/.test(narrative)) {
+    return 'cosmic_vision';
+  }
+  // Cyberpunk for tech/city/futuristic mentions
+  if (/cyberpunk|neon|city|skyscraper|robot|android|future|cyber|matrix|hologram/.test(narrative)) {
+    return 'cyberpunk_neon';
+  }
+  // Botanical for nature/garden mentions
+  if (/garden|flower|plant|tree|forest|botanical|leaf|petal/.test(narrative)) {
+    return 'botanical_vintage';
+  }
+  // Surrealist for impossible/abstract mentions
+  if (/impossible|floating|melting|geometry|infinite|strange|surreal|twisted|warped/.test(narrative)) {
+    return 'surreal_dali';
+  }
+  // Minimalist for peaceful/zen
+  if (emotions.includes('Peace') && emotions.length === 1) {
+    return 'minimalist_ink';
+  }
+  // Ghibli for childlike wonder
+  if (emotions.includes('Wonder') || /child|childhood|play|magic|whimsy/.test(narrative)) {
+    return 'ghibli';
+  }
+  // Oil for sad/melancholic
+  if (emotions.includes('Sadness') || emotions.includes('Nostalgia')) {
+    return 'oil_dreamscape';
+  }
+  // If a dream type template matched, use its suggested style
+  if (dreamType && dreamType.suggestedStyle) {
+    return dreamType.suggestedStyle;
+  }
+  // Default: watercolour comic
+  return 'watercolour_comic';
+}
+
+// Pick a style for a dream based on user's rotation mode setting
+async function pickStyleForDream(dream) {
+  const mode = await getSetting('styleRotationMode', 'auto');
+  const fixedStyle = await getSetting('defaultStyle', 'watercolour_comic');
+
+  if (mode === 'fixed') return fixedStyle;
+  if (mode === 'random') {
+    return ART_STYLES[Math.floor(Math.random() * ART_STYLES.length)].id;
+  }
+  // auto: use content-based default
+  return chooseDefaultStyle(dream);
+}
+
+// ==================== IMAGE PROMPT BUILDER (v5) ====================
+// Visual keyword extractor — finds the most "painterly" phrases in a narrative.
+const VISUAL_NOUNS = {
+  // People & beings
+  'woman':'elegant woman','man':'figure of a man','child':'small child','stranger':'mysterious stranger',
+  'crowd':'gathered crowd','people':'figures','monster':'shadowy creature','dragon':'serpentine dragon',
+  'bird':'soaring bird','cat':'watchful cat','dog':'loyal hound','horse':'galloping horse','fish':'silver fish',
+  'wolf':'grey wolf','snake':'coiled serpent','spider':'intricate spider','bear':'massive bear','deer':'graceful deer',
+  // Places
+  'house':'weathered house','building':'towering structure','castle':'ancient castle','school':'empty school',
+  'forest':'dense forest','ocean':'vast ocean','sea':'moonlit sea','river':'winding river','mountain':'distant mountain',
+  'beach':'sandy shore','cave':'cavernous depth','city':'sprawling city','road':'endless road','bridge':'stone bridge',
+  'garden':'overgrown garden','church':'silent church','room':'dim room','doorway':'mysterious doorway','corridor':'long corridor',
+  'staircase':'spiralling staircase','window':'tall window','mirror':'ornate mirror',
+  // Objects
+  'book':'leatherbound book','key':'rusty key','clock':'ticking clock','door':'wooden door','chair':'empty chair',
+  'table':'worn table','candle':'flickering candle','lamp':'glowing lamp','phone':'old telephone','car':'vintage car',
+  'boat':'small boat','ship':'distant ship','train':'steam train','plane':'silver plane','bicycle':'rusty bicycle',
+  'mirror':'tarnished mirror','painting':'faded painting','photograph':'old photograph','letter':'handwritten letter',
+  'map':'tattered map','compass':'brass compass','crystal':'glowing crystal','gem':'shimmering gemstone','ring':'golden ring',
+  // Natural elements
+  'fire':'crackling fire','water':'flowing water','rain':'gentle rain','snow':'drifting snow','wind':'swirling wind',
+  'cloud':'billowing cloud','sun':'low sun','moon':'full moon','star':'distant star','tree':'ancient tree',
+  'flower':'delicate flower','grass':'tall grass','leaf':'falling leaf','stone':'mossy stone','sand':'shifting sand',
+  'fog':'rolling fog','mist':'ethereal mist','light':'soft light','shadow':'deep shadow',
+  // Actions
+  'flying':'soaring through air','falling':'plummeting downward','running':'in full flight','swimming':'gliding through water',
+  'dancing':'graceful motion','singing':'voice lifted up','floating':'weightless drift','climbing':'ascending upward',
+};
+
+const VISUAL_ADJECTIVES = {
+  'big':'massive','small':'tiny','old':'ancient','new':'pristine','bright':'luminous','dark':'shadowed',
+  'red':'crimson','blue':'azure','green':'verdant','gold':'gilded','white':'alabaster','black':'obsidian',
+  'beautiful':'exquisite','scary':'menacing','happy':'radiant','sad':'mournful','strange':'uncanny',
+  'familiar':'nostalgic','ancient':'timeless','empty':'deserted','crowded':'bustling','tall':'towering',
+  'deep':'fathomless','wide':'expansive','narrow':'constricted',
+};
+
+const LUCIDITY_DESCRIPTORS = [
+  'hazy, half-remembered vision',           // 0
+  'fragmented, impressionistic dream',      // 1
+  'vivid, sharply observed dream',          // 2
+  'semi-lucid dream with dawning awareness', // 3
+  'lucid dream, crystal clear and intentional', // 4
+  'fully lucid dream, hyperreal and luminous',  // 5
+];
+
+const EMOTION_MODIFIERS = {
+  'Joy': 'warm golden light, uplifting radiance',
+  'Fear': 'ominous shadows, foreboding atmosphere, deep contrast',
+  'Wonder': 'sparkling motes, ethereal glow, sense of vastness',
+  'Peace': 'soft diffused light, serene stillness',
+  'Anxiety': 'distorted perspectives, claustrophobic framing',
+  'Excitement': 'dynamic motion, vibrant energy',
+  'Sadness': 'muted desaturated tones, melancholic rain',
+  'Confusion': 'swirling fragments, impossible geometry',
+  'Nostalgia': 'sepia-tinted warmth, hazy memory',
+  'Awe': 'monumental scale, sublime vastness',
+  'Curiosity': 'intricate details, inviting mystery',
+  'Love': 'rose-gold warmth, gentle bokeh',
+};
+
+const TIME_OF_NIGHT_PALETTE = {
+  // Based on dream time of day
+  'night': 'midnight navy and silver moonlight',
+  'dawn': 'soft pink and pale gold sunrise',
+  'morning': 'soft blue and warm cream daylight',
+  'day': 'clear azure and bright daylight',
+  'dusk': 'deep orange and purple twilight',
+  'unknown': 'teal and midnight navy with bioluminescent accents',
+};
+
+function extractVisualKeywords(narrative) {
+  if (!narrative) return [];
+  const text = narrative.toLowerCase();
+  const found = new Set();
+  // Single-word visual nouns
+  for (const [key, phrase] of Object.entries(VISUAL_NOUNS)) {
+    const re = new RegExp('\\b' + key + 's?\\b', 'i');
+    if (re.test(text)) found.add(phrase);
+  }
+  // Adjective-noun pairs (e.g. "old house" -> "ancient weathered house")
+  const words = text.split(/\s+/);
+  for (let i = 0; i < words.length - 1; i++) {
+    const adj = words[i].replace(/[^a-z]/g, '');
+    const noun = words[i + 1].replace(/[^a-z]/g, '');
+    if (VISUAL_ADJECTIVES[adj] && VISUAL_NOUNS[noun]) {
+      found.add(`${VISUAL_ADJECTIVES[adj]} ${VISUAL_NOUNS[noun]}`);
+    }
+  }
+  // Limit to 5 most relevant (first occurrences)
+  return Array.from(found).slice(0, 5);
+}
+
+function getTimeOfDay(timeStr) {
+  if (!timeStr) return 'unknown';
+  const [h] = timeStr.split(':').map(Number);
+  if (isNaN(h)) return 'unknown';
+  if (h >= 22 || h < 4) return 'night';
+  if (h >= 4 && h < 8) return 'dawn';
+  if (h >= 8 && h < 12) return 'morning';
+  if (h >= 12 && h < 17) return 'day';
+  if (h >= 17 && h < 22) return 'dusk';
+  return 'unknown';
+}
+
+function getMoodModifier(emotions) {
+  if (!emotions || !emotions.length) return 'mysterious, ethereal atmosphere';
+  // Use up to 2 emotions
+  const topEmotions = emotions.slice(0, 2);
+  const modifiers = topEmotions.map(e => EMOTION_MODIFIERS[e]).filter(Boolean);
+  if (!modifiers.length) return 'mysterious, ethereal atmosphere';
+  return modifiers.join(', ');
+}
+
+// Build a rich, detailed image prompt
+function buildImagePrompt(dream, options = {}) {
+  const level = dream.lucidityLevel || 0;
+  const lucidityDesc = LUCIDITY_DESCRIPTORS[Math.min(level, 5)];
+  const mood = getMoodModifier(dream.emotions);
+  const timeOfDay = getTimeOfDay(dream.time);
+  const palette = TIME_OF_NIGHT_PALETTE[timeOfDay];
+  const keywords = scenes && scenes.length
+    ? scenes[options.sceneIndex || 0].keywords
+    : extractVisualKeywords(dream.narrative);
+
+  // Use smart scene extraction: pick most visual sentence
+  let scene;
+  const scenes = extractDreamScenes(dream.narrative, 3);
+  if (scenes && scenes.length) {
+    const sceneIdx = Math.min(options.sceneIndex || 0, scenes.length - 1);
+    scene = scenes[sceneIdx].text;
+  } else {
+    scene = (dream.narrative || '').slice(0, 180).trim();
+  }
+  if (scene.length > 220) scene = scene.slice(0, 220).replace(/\s+\S*$/, '') + '…';
+
+  // Style is determined by Stage 3 (ART_STYLES). If options.style is provided,
+  // we'll look it up; otherwise default to 'watercolour_comic'.
+  let stylePrefix = 'watercolour and ink illustration,';
+  let styleSuffix = 'field guide illustration aesthetic';
+  if (options.style && typeof ART_STYLES !== 'undefined') {
+    const style = ART_STYLES.find(s => s.id === options.style);
+    if (style) {
+      stylePrefix = style.promptPrefix;
+      styleSuffix = style.promptSuffix;
+    }
+  }
+
+  // Composition rules — vary based on whether lucid
+  const composition = dream.isLucid
+    ? 'centered composition with radiant focal point, sense of clarity and intention'
+    : 'asymmetric composition with shifting perspectives, dreamlike layered depth';
+
+  // v5: Emotion-driven palette + lighting (overrides time-of-night)
+  const emotionPalette = buildPaletteString(dream.emotions, timeOfDay, dream.isLucid);
+  const emotionLighting = buildLightingString(dream.emotions, dream.isLucid);
+  const visualElements = buildVisualElementsString(dream.emotions);
+
+  // Negative prompt (with user customizations applied at build time via async getter — but buildImagePrompt is sync.
+  // So we read from a cached value populated on init.
+  const customSuffix = window.__customPromptSuffix || '';
+  const customNegative = window.__customNegativePrompt || '';
+  const negative = 'no text, no words, no letters, no signature, no watermark, no speech bubbles, no captions, no distorted faces, no extra limbs' + (customNegative ? ', ' + customNegative : '');
+
+  // Title (shorten if too long)
+  const title = (dream.title || 'Untitled Dream').slice(0, 60);
+
+  // Detect dream type for template-specific prompt additions
+  const dreamType = detectDreamType(dream);
+  const typeAdd = dreamType ? dreamType.promptAdd : '';
+
+  // Assemble prompt parts
+  const parts = [
+    stylePrefix,
+    `depicting a ${lucidityDesc}`,
+    `titled "${title}".`,
+    `Scene: ${scene}.`,
+    keywords.length ? `Visual elements: ${keywords.join(', ')}.` : '',
+    typeAdd ? `Dream type: ${dreamType.label}. ${typeAdd}.` : '',
+    `Mood: ${mood}.`,
+    `Atmospheric elements: ${visualElements}.`,
+    `${composition}.`,
+    `Lighting: ${emotionLighting}.`,
+    `Colour palette: ${emotionPalette}.`,
+    styleSuffix + '.',
+    negative + '.',
+  ].filter(Boolean);
+
+  if (customSuffix) parts.push(customSuffix + '.');
+  return parts.join(' ');
+}
+
+// Update image in DOM after generation or IDB lookup (v5)
+function updateImageInDOM(dreamId, url, meta = null) {
   window.__dreamImageCache = window.__dreamImageCache || {};
   window.__dreamImageCache[dreamId] = url;
+  window.__dreamImageMeta = window.__dreamImageMeta || {};
+  if (meta) window.__dreamImageMeta[dreamId] = meta;
+
   const thumb = document.querySelector(`[data-thumb="${dreamId}"]`);
-  if (thumb) thumb.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+  if (thumb) {
+    const proceduralClass = meta && meta.procedural ? ' procedural' : '';
+    thumb.innerHTML = `<img src="${url}" alt="Dream illustration" loading="lazy" class="dream-thumb-img${proceduralClass}">`;
+  }
   const banner = document.querySelector(`[data-banner="${dreamId}"]`);
-  if (banner) banner.innerHTML = `<img class="dream-banner" src="${url}" alt="Dream illustration" loading="lazy">`;
+  if (banner) {
+    const proceduralClass = meta && meta.procedural ? ' procedural' : '';
+    const styleLabel = meta && meta.style ? `<div class="banner-style-label">${escapeHtml(meta.style)}</div>` : '';
+    banner.innerHTML = `<img class="dream-banner${proceduralClass}" src="${url}" alt="Dream illustration" loading="lazy">${styleLabel}`;
+  }
+}
+
+// Show loading state in DOM while image generates
+function showImageLoadingInDOM(dreamId) {
+  const thumb = document.querySelector(`[data-thumb="${dreamId}"]`);
+  if (thumb) thumb.innerHTML = `<div class="thumb-shimmer shimmer"></div>`;
+  const banner = document.querySelector(`[data-banner="${dreamId}"]`);
+  if (banner) banner.innerHTML = `<div class="dream-banner-shimmer shimmer"></div><div class="banner-loading-label">Conjuring dream art…</div>`;
 }
 
 function showImageFallbackInDOM(dreamId) {
@@ -2698,75 +4019,64 @@ function showImageFallbackInDOM(dreamId) {
   if (banner) banner.innerHTML = `<div class="dream-banner-fallback">${moonPhaseSVG(48)}</div>`;
 }
 
-// Image generation with retry and DOM update (FIXED)
-async function triggerImageGeneration(dreamId, retryCount = 0) {
+// Image generation with retry and DOM update (v5 — uses provider orchestrator)
+async function triggerImageGeneration(dreamId, retryCount = 0, options = {}) {
   const imageGenOn = await getSetting('imageGen', true);
   if (!imageGenOn) return;
 
-  if (!navigator.onLine) {
-    const d2 = await getDream(dreamId);
-    if (d2) await putDream({ ...d2, imagePending: true });
-    showImageFallbackInDOM(dreamId);
-    return;
-  }
-
-  // 1. If we already have a valid image, use it.
-  const existing = await getDreamImage(dreamId);
-  if (existing && existing.url && retryCount === 0) {
-    // Only trust the stored URL on the first attempt, not after a retry.
-    updateImageInDOM(dreamId, existing.url);
-    return;
+  // 1. If we already have a valid image AND not forcing regenerate, use it.
+  if (!options.force) {
+    const existing = await getDreamImage(dreamId);
+    if (existing && existing.url && retryCount === 0) {
+      updateImageInDOM(dreamId, existing.url, existing);
+      return;
+    }
   }
 
   // 2. Remove any previously stored (possibly broken) entry.
   await deleteDreamImage(dreamId);
 
-  const dream = await getDream(dreamId);
-  if (!dream) return;
+  // Show shimmer while generating
+  showImageLoadingInDOM(dreamId);
 
-  const prompt = buildImagePrompt(dream);
-  // Add a random suffix to avoid cached results on retries.
-  const seed = `${dreamId}-${retryCount}-${Math.random().toString(36).slice(2, 7)}`;
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=384&nologo=true&seed=${encodeURIComponent(seed)}`;
-
-  const img = new Image();
-  let settled = false;
-
-  const handleFailure = async () => {
-    if (settled) return;
-    settled = true;
-    img.src = '';
-    // Clean up any partial image data
-    await deleteDreamImage(dreamId);
-    console.warn(`LucidLog: image generation failed for ${dreamId} (retry ${retryCount})`);
-    if (retryCount < 1) {
-      triggerImageGeneration(dreamId, retryCount + 1);
+  // If offline, fall back to procedural SVG (don't mark pending — generate immediately)
+  if (!navigator.onLine) {
+    const result = await generateDreamImage(dreamId, options);
+    if (result) {
+      await putDreamImage(dreamId, result);
+      updateImageInDOM(dreamId, result.url, result);
     } else {
       showImageFallbackInDOM(dreamId);
-      // Mark as no longer pending so we don't keep trying forever
+    }
+    return;
+  }
+
+  // 3. Pick style if not specified
+  if (!options.style) {
+    const dream = await getDream(dreamId);
+    if (dream) options.style = await pickStyleForDream(dream);
+  }
+
+  // 4. Try generation via orchestrator (handles provider fallback + procedural fallback)
+  const result = await generateDreamImage(dreamId, options);
+  if (result && result.url) {
+    // Add to multi-image gallery (also writes to legacy store for backward compat)
+    await addDreamImage(dreamId, result);
+    await putDreamImage(dreamId, result);  // legacy
+    updateImageInDOM(dreamId, result.url, result);
+    // If procedural (offline-fallback) and we're back online, mark pending to retry later
+    if (result.procedural && navigator.onLine) {
+      const d = await getDream(dreamId);
+      if (d) await putDream({ ...d, imagePending: true });
+    } else {
       const d = await getDream(dreamId);
       if (d && d.imagePending) await putDream({ ...d, imagePending: false });
     }
-  };
-
-  // Timeout safety
-  const timer = setTimeout(handleFailure, 30000);
-
-  img.onload = async () => {
-    if (settled) return;
-    settled = true;
-    clearTimeout(timer);
-    // Verify the image is not a tiny fallback (natural width < 10px)
-    if (img.naturalWidth < 10) {
-      await handleFailure();
-      return;
-    }
-    await putDreamImage(dreamId, url);
-    updateImageInDOM(dreamId, url);
-  };
-
-  img.onerror = handleFailure;
-  img.src = url;
+    // Dispatch event so detail view can refresh gallery if open
+    window.dispatchEvent(new CustomEvent('dream-image-added', { detail: { dreamId, image: result } }));
+  } else {
+    showImageFallbackInDOM(dreamId);
+  }
 }
 
 // Retry pending images on app open
@@ -3211,8 +4521,9 @@ async function viewDream(id) {
   const imgRec = await getDreamImage(id);
   const cachedUrl = window.__dreamImageCache && window.__dreamImageCache[id];
   const imgUrl = (imgRec && imgRec.url) || cachedUrl;
+  const imgMeta = imgRec || (window.__dreamImageMeta && window.__dreamImageMeta[id]) || null;
   const bannerHtml = imgUrl
-    ? `<div data-banner="${id}"><img class="dream-banner" src="${imgUrl}" alt="Dream illustration" loading="lazy"></div>`
+    ? `<div data-banner="${id}"><img class="dream-banner" src="${imgUrl}" alt="Dream illustration" loading="lazy" style="cursor:pointer;" onclick="openLightbox('${imgUrl}', ${JSON.stringify(imgMeta || {}).replace(/"/g, '&quot;')})"></div>`
     : `<div data-banner="${id}"><div class="dream-banner-shimmer shimmer"></div></div>`;
   // If no image yet, trigger generation so it appears when ready
   if (!imgUrl) triggerImageGeneration(id);
@@ -3220,6 +4531,7 @@ async function viewDream(id) {
   overlay.innerHTML=`<div class="modal">
     <div class="modal-header" style="align-items:start;"><div><h2 style="margin-bottom:4px;">${escapeHtml(d.title)}</h2><div style="color:var(--muted);font-size:0.86rem;">${dateStr}${d.time?' at '+d.time:''}</div></div><button class="btn-icon btn-secondary" onclick="closeModal()" aria-label="Close"><i data-lucide="x" style="width:20px;height:20px;"></i></button></div>
     ${bannerHtml}
+    <div id="dreamGalleryStrip" style="margin-bottom:14px;"></div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><div style="font-size:1.15rem;">${stars}</div><span class="badge badge-accent">${(d.lucidityLevel||0)>=3?'High lucidity':'Low lucidity'}</span>${lucidBadge}</div>
     ${d.emotions&&d.emotions.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${d.emotions.map(e=>`<span class="badge badge-accent">${e}</span>`).join('')}</div>`:''}
     ${d.tags&&d.tags.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${d.tags.map(t=>`<span class="badge" style="background:rgba(245,217,122,0.12);color:var(--gold);">#${escapeHtml(t)}</span>`).join('')}</div>`:''}
@@ -3233,12 +4545,16 @@ async function viewDream(id) {
     </div>` : ''}
     <div style="line-height:1.8;white-space:pre-wrap;color:var(--text);font-size:0.93rem;">${escapeHtml(d.narrative)}</div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
-      <button class="btn btn-secondary btn-sm" onclick="regenerateImage('${d.id}')" title="Regenerate image"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Regenerate art</button>
+      <button class="btn btn-secondary btn-sm" onclick="openStylePicker('${d.id}')" title="Choose art style"><i data-lucide="palette" style="width:14px;height:14px;"></i> Style</button>
+      <button class="btn btn-secondary btn-sm" onclick="openPromptPreview('${d.id}')" title="Preview/edit prompt"><i data-lucide="eye" style="width:14px;height:14px;"></i> Prompt</button>
+      <button class="btn btn-secondary btn-sm" onclick="regenerateImage('${d.id}')" title="Regenerate image"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Regenerate</button>
       <button class="btn btn-danger btn-sm" onclick="deleteDreamAction('${d.id}')">Delete</button>
       <button class="btn btn-secondary" onclick="closeModal();openDreamForm('${d.id}')">Edit</button>
     </div></div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
   overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+  // Load gallery strip after modal is shown
+  setTimeout(() => loadDreamGallery('<span class="badge badge-lucid" style="margin-left:8px;">Lucid</span>'), 100);
 }
 
 async function regenerateImage(dreamId) {
@@ -4659,6 +5975,12 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferr
 
 async function renderSettings() {
   const imageGen = await getSetting('imageGen', true);
+  const defaultStyle = await getSetting('defaultStyle', 'watercolour_comic');
+  const styleRotationMode = await getSetting('styleRotationMode', 'auto');
+  const imageAspectRatio = await getSetting('imageAspectRatio', 'banner');
+  const imageResolutionTier = await getSetting('imageResolutionTier', 'standard');
+  const customPromptSuffix = await getSetting('customPromptSuffix', '');
+  const customNegativePrompt = await getSetting('customNegativePrompt', '');
   const notifications = await getSetting('notifications', { enabled: false });
   const rcSetup = await getSetting('rcNotifSetup', { technique: 'fingers', frequency: 5, enabled: false });
   const ritualTime = await getSetting('ritualTime', '22:00');
@@ -4686,7 +6008,36 @@ async function renderSettings() {
     <h1 style="margin-bottom:24px;">Settings</h1>
     ${installHtml}
     <div class="card settings-card"><h3>Features</h3>
-      <div class="settings-row"><div><div class="settings-label">Auto-generate dream art</div><div class="settings-desc">Create AI comic thumbnails for your dreams using Pollinations.ai</div></div><label class="toggle-switch"><input type="checkbox" id="imageGenToggle" ${imageGen?'checked':''} onchange="toggleImageGen()" aria-label="Toggle image generation"><span class="toggle-slider"></span></label></div>
+      <div class="settings-row"><div><div class="settings-label">Auto-generate dream art</div><div class="settings-desc">Create AI illustrations for your dreams (multi-provider with smart fallback)</div></div><label class="toggle-switch"><input type="checkbox" id="imageGenToggle" ${imageGen?'checked':''} onchange="toggleImageGen()" aria-label="Toggle image generation"><span class="toggle-slider"></span></label></div>
+      <div class="settings-row"><div><div class="settings-label">Default art style</div><div class="settings-desc">Style used when auto-rotating doesn't pick a specific one</div></div>
+        <select id="defaultStyleSelect" style="max-width:180px;" onchange="saveDefaultStyle()">
+          ${ART_STYLES.map(s => `<option value="${s.id}" ${defaultStyle===s.id?'selected':''}>${s.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="settings-row"><div><div class="settings-label">Style rotation</div><div class="settings-desc">How styles are picked per dream</div></div>
+        <select id="styleRotationSelect" style="max-width:180px;" onchange="saveStyleRotation()">
+          <option value="auto" ${styleRotationMode==='auto'?'selected':''}>Auto (content-based)</option>
+          <option value="random" ${styleRotationMode==='random'?'selected':''}>Random</option>
+          <option value="fixed" ${styleRotationMode==='fixed'?'selected':''}>Always use default</option>
+        </select>
+      </div>
+      <div class="settings-row"><div><div class="settings-label">Aspect ratio</div><div class="settings-desc">Default image shape</div></div>
+        <select id="aspectRatioSelect" style="max-width:180px;" onchange="saveAspectRatio()">
+          ${ASPECT_RATIOS.map(r => `<option value="${r.id}" ${imageAspectRatio===r.id?'selected':''}>${r.label} (${r.description})</option>`).join('')}
+        </select>
+      </div>
+      <div class="settings-row"><div><div class="settings-label">Resolution tier</div><div class="settings-desc">Higher = sharper but slower</div></div>
+        <select id="resolutionTierSelect" style="max-width:180px;" onchange="saveResolutionTier()">
+          ${RESOLUTION_TIERS.map(t => `<option value="${t.id}" ${imageResolutionTier===t.id?'selected':''}>${t.label} (${Math.round(t.multiplier*100)}%)</option>`).join('')}
+        </select>
+      </div>
+      <div class="settings-row"><div><div class="settings-label">Custom prompt suffix</div><div class="settings-desc">Added to every image prompt (e.g. "ultra-detailed, 4k, sharp focus")</div></div>
+        <input type="text" id="customPromptSuffixInput" value="${escapeHtml(customPromptSuffix)}" placeholder="ultra-detailed, sharp focus" style="max-width:240px;" onchange="saveCustomPromptSuffix()">
+      </div>
+      <div class="settings-row"><div><div class="settings-label">Extra negative prompt</div><div class="settings-desc">Things to avoid (e.g. "blurry, low quality, deformed")</div></div>
+        <input type="text" id="customNegativeInput" value="${escapeHtml(customNegativePrompt)}" placeholder="blurry, low quality" style="max-width:240px;" onchange="saveCustomNegativePrompt()">
+      </div>
+      <div class="settings-row"><div><div class="settings-label" style="color:var(--danger);">Clear all generated images</div><div class="settings-desc">Frees storage by deleting every dream image</div></div><button class="btn btn-danger btn-sm" onclick="clearAllDreamImages()">Clear</button></div>
       <div class="settings-row"><div><div class="settings-label">Reality check reminders</div><div class="settings-desc">Receive periodic reminders to perform reality checks</div></div><label class="toggle-switch"><input type="checkbox" id="rcNotifToggle" ${rcSetup.enabled?'checked':''} onchange="toggleRCNotifications()" aria-label="Toggle RC notifications"><span class="toggle-slider"></span></label></div>
     </div>
 
@@ -4738,6 +6089,54 @@ async function installApp() {
   const result = await deferredPrompt.userChoice;
   if (result.outcome === 'accepted') showToast('LucidLog installed!');
   deferredPrompt = null;
+}
+
+async function saveDefaultStyle() {
+  const v = document.getElementById('defaultStyleSelect').value;
+  await putSetting('defaultStyle', v);
+  showToast('Default style updated', 'palette');
+}
+async function saveStyleRotation() {
+  const v = document.getElementById('styleRotationSelect').value;
+  await putSetting('styleRotationMode', v);
+  showToast('Style rotation updated', 'palette');
+}
+async function saveAspectRatio() {
+  const v = document.getElementById('aspectRatioSelect').value;
+  await putSetting('imageAspectRatio', v);
+  showToast('Aspect ratio updated', 'palette');
+}
+async function saveResolutionTier() {
+  const v = document.getElementById('resolutionTierSelect').value;
+  await putSetting('imageResolutionTier', v);
+  showToast('Resolution tier updated', 'palette');
+}
+async function saveCustomPromptSuffix() {
+  const v = document.getElementById('customPromptSuffixInput').value.trim();
+  await putSetting('customPromptSuffix', v);
+  window.__customPromptSuffix = v;
+  showToast('Custom prompt suffix saved', 'check-circle');
+}
+async function saveCustomNegativePrompt() {
+  const v = document.getElementById('customNegativeInput').value.trim();
+  await putSetting('customNegativePrompt', v);
+  window.__customNegativePrompt = v;
+  showToast('Negative prompt saved', 'check-circle');
+}
+async function clearAllDreamImages() {
+  if (!confirm('Delete ALL generated dream images? This frees storage but you\'ll need to regenerate.')) return;
+  if (!confirm('This will delete images for every dream. Really proceed?')) return;
+  const d = await openDB();
+  if (d.objectStoreNames.contains('dream_images')) {
+    d.transaction('dream_images', 'readwrite').objectStore('dream_images').clear();
+  }
+  if (d.objectStoreNames.contains('dream_images_v2')) {
+    d.transaction('dream_images_v2', 'readwrite').objectStore('dream_images_v2').clear();
+  }
+  window.__dreamImageCache = {};
+  window.__dreamImageMeta = {};
+  showToast('All dream images cleared', 'trash-2', 'success');
+  await renderPage(currentPage);
 }
 
 async function toggleImageGen() { await putSetting('imageGen', !await getSetting('imageGen',true)); }
@@ -5179,6 +6578,186 @@ function showKeyboardHelp() {
   overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
 }
 
+// ==================== IMAGE GENERATION UI (v5) ====================
+
+// Style picker modal
+async function openStylePicker(dreamId, opts = {}) {
+  const currentStyle = opts.currentStyle || (await getSetting('defaultStyle', 'watercolour_comic'));
+  const overlay = document.createElement('div'); overlay.className='modal-overlay'; overlay.id='dreamModal';
+  overlay.innerHTML = `<div class="modal" style="max-width:580px;">
+    <div class="modal-header"><h2>Choose Art Style</h2><button class="btn-icon btn-secondary" onclick="closeModal()" aria-label="Close"><i data-lucide="x" style="width:20px;height:20px;"></i></button></div>
+    <p class="text-muted" style="font-size:0.86rem;margin-bottom:6px;">Pick a style for this dream's illustration. Each style produces a distinctly different visual mood.</p>
+    <div class="style-picker-grid" id="stylePickerGrid">
+      ${ART_STYLES.map(s => `
+        <div class="style-picker-card ${s.id === currentStyle ? 'selected' : ''}" data-style="${s.id}" onclick="selectStyleInPicker('${s.id}')" tabindex="0" role="button" aria-label="Select ${escapeHtml(s.name)}">
+          <div class="style-check"><i data-lucide="check" style="width:12px;height:12px;"></i></div>
+          <div class="style-preview style-preview-${s.id}"></div>
+          <div class="style-name"><i data-lucide="${s.icon}" style="width:14px;height:14px;color:var(--accent);"></i>${escapeHtml(s.name)}</div>
+          <div class="style-desc">${escapeHtml(s.description)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:14px;padding:12px;background:var(--mist);border-radius:var(--radius-sm);">
+      <div style="font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:8px;">Aspect ratio</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="aspectRatioPicker">
+        ${ASPECT_RATIOS.map(r => `
+          <button class="chip" data-ar="${r.id}" onclick="selectAspectRatio('${r.id}')" style="font-size:0.78rem;padding:5px 10px;">${r.label}</button>
+        `).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn btn-secondary" onclick="randomStyleInPicker('${dreamId}')"><i data-lucide="shuffle" style="width:14px;height:14px;"></i> Surprise me</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="stylePickerGenerate" onclick="confirmStylePicker('${dreamId}')"><i data-lucide="sparkles" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+  // Keyboard: Enter to confirm, Esc handled globally
+  overlay.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.classList.contains('style-picker-card')) {
+      confirmStylePicker(dreamId);
+    }
+  });
+}
+
+let __pickedStyle = null;
+function selectStyleInPicker(styleId) {
+  __pickedStyle = styleId;
+  document.querySelectorAll('.style-picker-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.style === styleId);
+  });
+}
+
+function randomStyleInPicker(dreamId) {
+  const random = ART_STYLES[Math.floor(Math.random() * ART_STYLES.length)].id;
+  selectStyleInPicker(random);
+}
+
+let __pickedAspectRatio = null;
+function selectAspectRatio(arId) {
+  __pickedAspectRatio = arId;
+  document.querySelectorAll('#aspectRatioPicker .chip').forEach(c => {
+    c.classList.toggle('selected', c.dataset.ar === arId);
+  });
+}
+
+async function confirmStylePicker(dreamId) {
+  const styleId = __pickedStyle || (await getSetting('defaultStyle', 'watercolour_comic'));
+  const aspectRatio = __pickedAspectRatio || (await getSetting('imageAspectRatio', 'banner'));
+  closeModal();
+  // Trigger generation with this style + aspect ratio
+  showToast(`Generating ${getArtStyle(styleId).name} (${aspectRatio})…`, 'image', 'info');
+  await triggerImageGeneration(dreamId, 0, { style: styleId, aspectRatio, force: true });
+  // Refresh the dream detail view if it's open
+  refreshDreamDetailIfOpen(dreamId);
+}
+
+// Prompt preview modal
+async function openPromptPreview(dreamId) {
+  const dream = await getDream(dreamId);
+  if (!dream) return;
+  const style = await pickStyleForDream(dream);
+  const prompt = buildImagePrompt(dream, { style });
+  const overlay = document.createElement('div'); overlay.className='modal-overlay prompt-preview-modal'; overlay.id='dreamModal';
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-header"><h2>Prompt Preview</h2><button class="btn-icon btn-secondary" onclick="closeModal()" aria-label="Close"><i data-lucide="x" style="width:20px;height:20px;"></i></button></div>
+    <p class="text-muted" style="font-size:0.86rem;margin-bottom:10px;">This is the exact prompt that will be sent to the image provider. Edit freely — your changes will be used.</p>
+    <textarea id="promptPreviewText">${escapeHtml(prompt)}</textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="generateWithCustomPrompt('${dreamId}')"><i data-lucide="sparkles" style="width:14px;height:14px;"></i> Generate with this prompt</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+}
+
+async function generateWithCustomPrompt(dreamId) {
+  const text = document.getElementById('promptPreviewText')?.value.trim();
+  if (!text) { showToast('Prompt is empty', 'alert-circle', 'warning'); return; }
+  closeModal();
+  showToast('Generating with custom prompt…', 'image', 'info');
+  await triggerImageGeneration(dreamId, 0, { prompt: text, force: true });
+  refreshDreamDetailIfOpen(dreamId);
+}
+
+// Lightbox
+function openLightbox(url, meta = null) {
+  const existing = document.getElementById('lightboxOverlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div'); overlay.className='lightbox-overlay'; overlay.id='lightboxOverlay';
+  const metaStr = meta ? `${meta.provider || ''} · ${meta.style || ''} · ${meta.procedural ? 'procedural' : 'AI-generated'}` : '';
+  overlay.innerHTML = `
+    <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
+    <img class="lightbox-img" src="${url}" alt="Dream illustration full view">
+    ${meta ? `<div class="lightbox-meta">${escapeHtml(metaStr)}</div>` : ''}
+    <div class="lightbox-controls">
+      <a class="btn btn-secondary btn-sm" href="${url}" download="dream-art-${Date.now()}.jpg"><i data-lucide="download" style="width:14px;height:14px;"></i> Download</a>
+      <button class="btn btn-secondary btn-sm" onclick="closeLightbox()"><i data-lucide="x" style="width:14px;height:14px;"></i> Close</button>
+    </div>
+  `;
+  document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  overlay.addEventListener('click', e => { if(e.target===overlay) closeLightbox(); });
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightboxOverlay');
+  if (lb) lb.remove();
+}
+
+// Helper: refresh dream detail if currently open for this dream
+async function refreshDreamDetailIfOpen(dreamId) {
+  const modal = document.getElementById('dreamModal');
+  if (!modal) return;
+  // Check if this is a dream detail modal (has data-banner attribute)
+  const banner = modal.querySelector(`[data-banner="${dreamId}"]`);
+  if (!banner) return;
+  // Re-open the dream detail view
+  await viewDream(dreamId);
+}
+
+
+// Load gallery strip into dream detail modal
+async function loadDreamGallery(dreamId) {
+  const strip = document.getElementById('dreamGalleryStrip');
+  if (!strip) return;
+  const images = await getAllDreamImages(dreamId);
+  if (images.length <= 1) {
+    strip.innerHTML = '';
+    return;
+  }
+  strip.innerHTML = `
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">${images.length} images in gallery</div>
+    <div class="dream-gallery">
+      ${images.map((img, i) => `
+        <div class="dream-gallery-thumb ${i === 0 ? 'active' : ''}" data-gallery-id="${img.id}" onclick="switchDreamImage('${dreamId}', '${img.id}')" title="${escapeHtml(img.style || img.provider)}">
+          <img src="${img.url}" alt="" loading="lazy">
+          ${img.style ? `<div class="thumb-style-tag">${escapeHtml(img.style)}</div>` : ''}
+        </div>
+      `).join('')}
+      <div class="dream-gallery-add" onclick="openStylePicker('${dreamId}')" title="Generate another image">
+        <i data-lucide="plus" style="width:16px;height:16px;"></i>
+      </div>
+    </div>
+  `;
+  lucide.createIcons({nodes:[strip]});
+}
+
+function switchDreamImage(dreamId, imageId) {
+  // Highlight clicked thumb and swap banner
+  document.querySelectorAll('.dream-gallery-thumb').forEach(t => t.classList.toggle('active', t.dataset.galleryId === imageId));
+  // Find the image record
+  getAllDreamImages(dreamId).then(images => {
+    const img = images.find(i => i.id === imageId);
+    if (!img) return;
+    const banner = document.querySelector(`[data-banner="${dreamId}"]`);
+    if (banner) {
+      const proceduralClass = img.procedural ? ' procedural' : '';
+      banner.innerHTML = `<img class="dream-banner${proceduralClass}" src="${img.url}" alt="Dream illustration" loading="lazy" style="cursor:pointer;" onclick="openLightbox('${img.url}', ${JSON.stringify(img).replace(/"/g, '&quot;')})">`;
+    }
+  });
+}
 // ==================== MICRO-INTERACTIONS (v5) ====================
 function setupMagneticButtons() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -5233,12 +6812,19 @@ window.__lucidLowPower = detectLowPower();
 if (window.__lucidLowPower) {
   document.documentElement.classList.add('low-power');
 }
+// Load user image-gen customizations into window globals (sync access from buildImagePrompt)
+async function loadImageGenCustomizations() {
+  window.__customPromptSuffix = await getSetting('customPromptSuffix', '');
+  window.__customNegativePrompt = await getSetting('customNegativePrompt', '');
+}
 // ==================== INIT ====================
 async function init() {
   createStarField();
   await openDB();
   await migrateFromLocalStorage();
   await refreshCache();
+  // Load image gen customizations
+  await loadImageGenCustomizations();
   // Apply theme
   const theme = await getSetting('theme', 'dark');
   applyTheme(theme);
