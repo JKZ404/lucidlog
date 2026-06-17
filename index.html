@@ -934,57 +934,74 @@ function showImageFallbackInDOM(dreamId) {
   if (banner) banner.innerHTML = `<div class="dream-banner-fallback">${moonPhaseSVG(48)}</div>`;
 }
 
-// Image generation with retry and DOM update
-async function triggerImageGeneration(dreamId, retryCount=0) {
+// Image generation with retry and DOM update (FIXED)
+async function triggerImageGeneration(dreamId, retryCount = 0) {
   const imageGenOn = await getSetting('imageGen', true);
   if (!imageGenOn) return;
+
   if (!navigator.onLine) {
     const d2 = await getDream(dreamId);
-    if(d2) await putDream({...d2, imagePending:true});
+    if (d2) await putDream({ ...d2, imagePending: true });
     showImageFallbackInDOM(dreamId);
     return;
   }
+
+  // 1. If we already have a valid image, use it.
   const existing = await getDreamImage(dreamId);
-  if (existing && existing.url) {
+  if (existing && existing.url && retryCount === 0) {
+    // Only trust the stored URL on the first attempt, not after a retry.
     updateImageInDOM(dreamId, existing.url);
     return;
   }
+
+  // 2. Remove any previously stored (possibly broken) entry.
+  await deleteDreamImage(dreamId);
+
   const dream = await getDream(dreamId);
   if (!dream) return;
+
   const prompt = buildImagePrompt(dream);
-  const seed = String(dreamId) + (retryCount > 0 ? '-retry' + retryCount : '');
+  // Add a random suffix to avoid cached results on retries.
+  const seed = `${dreamId}-${retryCount}-${Math.random().toString(36).slice(2, 7)}`;
   const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=384&nologo=true&seed=${encodeURIComponent(seed)}`;
+
   const img = new Image();
   let settled = false;
-  const timer = setTimeout(() => {
+
+  const handleFailure = async () => {
     if (settled) return;
     settled = true;
     img.src = '';
-    console.warn('LucidLog: image generation timed out for', dreamId, '(retry', retryCount, ')');
+    // Clean up any partial image data
+    await deleteDreamImage(dreamId);
+    console.warn(`LucidLog: image generation failed for ${dreamId} (retry ${retryCount})`);
     if (retryCount < 1) {
       triggerImageGeneration(dreamId, retryCount + 1);
     } else {
       showImageFallbackInDOM(dreamId);
+      // Mark as no longer pending so we don't keep trying forever
+      const d = await getDream(dreamId);
+      if (d && d.imagePending) await putDream({ ...d, imagePending: false });
     }
-  }, 120000);
+  };
+
+  // Timeout safety
+  const timer = setTimeout(handleFailure, 30000);
+
   img.onload = async () => {
     if (settled) return;
     settled = true;
     clearTimeout(timer);
+    // Verify the image is not a tiny fallback (natural width < 10px)
+    if (img.naturalWidth < 10) {
+      await handleFailure();
+      return;
+    }
     await putDreamImage(dreamId, url);
     updateImageInDOM(dreamId, url);
   };
-  img.onerror = () => {
-    if (settled) return;
-    settled = true;
-    clearTimeout(timer);
-    console.warn('LucidLog: image generation failed for', dreamId, '(retry', retryCount, ')');
-    if (retryCount < 1) {
-      setTimeout(() => triggerImageGeneration(dreamId, retryCount + 1), 2000);
-    } else {
-      showImageFallbackInDOM(dreamId);
-    }
-  };
+
+  img.onerror = handleFailure;
   img.src = url;
 }
 
