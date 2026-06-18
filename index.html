@@ -12,6 +12,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
+<!-- Three.js for WebGPU/WebGL volumetric nebula + shader ritual orb -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.169.0/build/three.module.js"
+  }
+}
+</script>
+<!-- GSAP for timeline-based UI animations -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<!-- Tone.js for audio-reactive ritual visualizer -->
+<script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
 <script>
 /* Inline PWA manifest — crescent moon icon as data URI */
 (function(){
@@ -486,6 +499,14 @@ ul, ol { list-style: none; }
   .hero-section { padding: 20px 16px; }
   .streak-pill { margin: 8px auto 0; }
   .hero-greeting, .hero-moon-name { text-align: center; }
+}
+@media (max-width: 380px) {
+  /* Very narrow phones — prevent hero time overflow */
+  .hero-time { font-size: 2rem; }
+  .hero-greeting { font-size: 0.85rem; }
+  .ritual-orb-wrap { width: 220px; height: 220px; }
+  .ritual-orb { width: 150px; height: 150px; }
+  .ritual-orb-text { font-size: 0.78rem; padding: 0 20px; max-width: 130px; }
 }
 
 
@@ -990,6 +1011,15 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
     opacity: 1 !important;
     stroke-dashoffset: 0 !important;
   }
+  /* v5 shader surfaces — hide canvases so the CSS fallbacks show */
+  .ritual-orb-canvas { display: none; }
+  .ritual-orb {
+    background: radial-gradient(circle at 35% 35%,
+      rgba(159,234,232,0.25) 0%, rgba(159,234,232,0.10) 40%,
+      rgba(13,27,42,0.6) 80%, rgba(13,27,42,0.9) 100%) !important;
+  }
+  .ritual-breath-ring { animation: none !important; opacity: 0.3; }
+  .ritual-particles { display: none; }
 }
 
 
@@ -1284,13 +1314,14 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 32px;
 }
+.ritual-orb-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 2;
+  border-radius: 50%;
+}
 .ritual-orb {
   width: 200px; height: 200px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%,
-    rgba(159,234,232,0.15) 0%,
-    rgba(159,234,232,0.08) 40%,
-    rgba(13,27,42,0.6) 80%,
-    rgba(13,27,42,0.9) 100%);
+  background: transparent;
   border: 2px solid rgba(159,234,232,0.2);
   cursor: pointer; position: relative;
   transition: transform 0.15s var(--ease-spring-soft), box-shadow 0.4s var(--ease-smooth);
@@ -1300,6 +1331,10 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
     inset 0 0 40px rgba(159,234,232,0.05);
   /* Charged state set via --charge variable (0..1) */
   --charge: 0;
+  z-index: 3;
+  /* Make the orb div transparent to pointer events on its surface so the
+     shader canvas doesn't block, BUT keep it clickable. Use background transparent
+     and let the div receive the click. */
 }
 .ritual-orb::before {
   content: ''; position: absolute; inset: -8px; border-radius: 50%;
@@ -1379,10 +1414,13 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
   letter-spacing: 0.1em; text-transform: uppercase;
 }
 
-/* Progress arc — visual charge indicator */
+/* Progress arc — visual charge indicator.
+   Centered on the orb-wrap; sized to extend slightly beyond the orb.
+   Uses inset negative offset relative to orb-wrap (which is 280x280). */
 .ritual-progress-arc {
-  position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
   width: 320px; height: 320px; pointer-events: none;
+  z-index: 1;
 }
 .ritual-progress-arc circle {
   fill: none; stroke-width: 2;
@@ -1401,22 +1439,31 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
   font-size: 0.84rem; color: var(--muted); text-align: center;
   max-width: 360px; line-height: 1.6;
   margin-bottom: 16px;
+  position: relative; z-index: 2;
 }
 
-/* Ritual stats bar (bottom) */
+/* Ritual stats bar (bottom).
+   Positioned at bottom but with safe spacing so it never overlaps the orb
+   even on short viewports. On very short screens, becomes static. */
 .ritual-stats {
-  position: absolute; bottom: 24px; left: 0; right: 0;
+  position: absolute; bottom: 20px; left: 0; right: 0;
   display: flex; justify-content: center; gap: 32px;
   font-size: 0.74rem; color: var(--muted);
   font-family: 'JetBrains Mono', monospace;
+  z-index: 3;
 }
 .ritual-stats .stat-item { text-align: center; }
 .ritual-stats .stat-item .val { color: var(--accent); font-size: 0.9rem; font-weight: 600; }
+/* On short viewports, stats move to flow position below the instruction */
+@media (max-height: 640px) {
+  .ritual-stats { position: static; margin-top: 20px; }
+}
 
-/* Particle canvas for charge + release effects */
+/* Particle canvas for charge + release effects.
+   Above the orb so explosion particles are visible; below the completion overlay. */
 .ritual-particles {
   position: absolute; inset: 0; pointer-events: none;
-  z-index: 1;
+  z-index: 4;
 }
 
 /* Completion overlay */
@@ -1704,7 +1751,7 @@ h1:hover { font-weight: 700; letter-spacing: -0.005em; }
 .empty-state p { color: var(--muted); max-width: 360px; margin-bottom: 28px; line-height: 1.6; font-size: 0.92rem; }
 
 /* ========== TOAST ========== */
-.toast-container { position: fixed; top: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast-container { position: fixed; top: 24px; right: 24px; z-index: 350; display: flex; flex-direction: column; gap: 8px; }
 .toast {
   background: var(--surface); border: 1px solid var(--card-border);
   border-radius: var(--radius-sm); padding: 12px 18px; font-size: 0.88rem;
@@ -2750,8 +2797,322 @@ async function refreshCache() {
 
 // ==================== LIVING BACKGROUND (v5) ====================
 function createStarField() {
-  // Legacy star-field div kept empty (hidden by CSS). Real work happens on canvas.
-  initLivingBackground();
+  // Try Three.js volumetric nebula first; fall back to 2D canvas if unavailable.
+  initVolumetricNebula().then(ok => {
+    if (!ok) initLivingBackground();
+  });
+}
+
+// ==================== VOLUMETRIC NEBULA (Three.js + GLSL) ====================
+// Raymarched SDF noise nebula with parallax stars. Falls back gracefully.
+let __nebulaRenderer = null;
+let __nebulaScene = null;
+let __nebulaCamera = null;
+let __nebulaMaterial = null;
+let __nebulaRAF = null;
+let __nebulaActive = false;
+
+async function initVolumetricNebula() {
+  // Hard gates: respect reduced motion, low-power devices, missing APIs
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+  if (window.__lucidLowPower) return false;
+  if (typeof THREE === 'undefined') {
+    // Three.js is loaded as ES module via importmap; import dynamically.
+    try {
+      const mod = await import('three');
+      window.THREE = mod;
+    } catch (e) {
+      console.warn('Three.js failed to load, falling back to 2D canvas', e);
+      return false;
+    }
+  }
+  const THREE = window.THREE;
+  if (!THREE || !THREE.WebGLRenderer) return false;
+
+  const canvas = document.getElementById('bgCanvas');
+  if (!canvas) return false;
+
+  try {
+    // Try WebGL2 first (universal support); WebGPU is still spotty.
+    // Use a WebGL renderer with a full-screen shader quad.
+    __nebulaRenderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: false,
+      alpha: false,
+      powerPreference: 'high-performance',
+    });
+    __nebulaRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    __nebulaRenderer.setSize(window.innerWidth, window.innerHeight);
+    __nebulaRenderer.setClearColor(0x0D1B2A, 1);
+
+    __nebulaScene = new THREE.Scene();
+    __nebulaCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    // Volumetric nebula fragment shader: raymarched 3D noise + parallax starfield.
+    // The shader produces: deep navy base, flowing teal nebula clouds (3D Simplex),
+    // subtle violet accents, golden highlights, and a parallax star layer.
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      precision highp float;
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform vec2 uResolution;
+      uniform vec2 uMouse;
+      uniform float uCharge;     // 0..1 — brightens when ritual is active
+      uniform float uLucidBoost; // 0..1 — brightens when user has lucid dreams
+
+      // --- 3D Simplex noise (Ashima Arts, public domain) ---
+      vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+      vec4 mod289(vec4 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+      vec4 permute(vec4 x){ return mod289(((x*34.0)+1.0)*x); }
+      vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+      float snoise(vec3 v){
+        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+        vec3 i  = floor(v + dot(v, C.yyy));
+        vec3 x0 = v - i + dot(i, C.xxx);
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min(g.xyz, l.zxy);
+        vec3 i2 = max(g.xyz, l.zxy);
+        vec3 x1 = x0 - i1 + C.xxx;
+        vec3 x2 = x0 - i2 + C.yyy;
+        vec3 x3 = x0 - D.yyy;
+        i = mod289(i);
+        vec4 p = permute(permute(permute(
+                   i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                 + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                 + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+        float n_ = 0.142857142857;
+        vec3 ns = n_ * D.wyz - D.xzx;
+        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0 * x_);
+        vec4 x = x_ * ns.x + ns.yyyy;
+        vec4 y = y_ * ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+        vec4 b0 = vec4(x.xy, y.xy);
+        vec4 b1 = vec4(x.zw, y.zw);
+        vec4 s0 = floor(b0)*2.0 + 1.0;
+        vec4 s1 = floor(b1)*2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+        vec3 p0 = vec3(a0.xy, h.x);
+        vec3 p1 = vec3(a0.zw, h.y);
+        vec3 p2 = vec3(a1.xy, h.z);
+        vec3 p3 = vec3(a1.zw, h.w);
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m * m;
+        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+      }
+
+      // FBM (Fractal Brownian Motion) — layered noise for cloud-like density
+      float fbm(vec3 p) {
+        float v = 0.0;
+        float a = 0.5;
+        for (int i = 0; i < 5; i++) {
+          v += a * snoise(p);
+          p *= 2.0;
+          a *= 0.5;
+        }
+        return v;
+      }
+
+      // Hash for procedural stars
+      float hash(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+      }
+
+      void main() {
+        vec2 uv = vUv;
+        vec2 p = (uv - 0.5) * vec2(uResolution.x / uResolution.y, 1.0);
+        // Mouse parallax (subtle)
+        p += uMouse * 0.05;
+
+        float t = uTime * 0.02;
+
+        // === NEBULA CLOUDS (3D FBM) ===
+        vec3 cloudPos = vec3(p * 1.5, t);
+        float clouds = fbm(cloudPos);
+        clouds = smoothstep(-0.2, 0.6, clouds);
+
+        // Second layer — slower, deeper
+        float deepClouds = fbm(vec3(p * 0.6, t * 0.5 + 100.0));
+        deepClouds = smoothstep(0.0, 0.5, deepClouds);
+
+        // === COLOR PALETTE (navy + teal + gold accents) ===
+        vec3 deepNavy = vec3(0.05, 0.10, 0.16);     // #0D1B2A
+        vec3 midNavy  = vec3(0.08, 0.13, 0.22);     // #152238
+        vec3 teal     = vec3(0.62, 0.92, 0.91);     // #9FEAE8
+        vec3 deepTeal = vec3(0.37, 0.74, 0.73);     // #5FBDB9
+        vec3 gold     = vec3(0.96, 0.85, 0.48);     // #F5D97A
+        vec3 violet   = vec3(0.72, 0.58, 0.96);     // #B794F4
+
+        // Base gradient: deep at edges, mid in center
+        float vignette = 1.0 - length(p) * 0.6;
+        vec3 col = mix(deepNavy, midNavy, vignette);
+
+        // Apply nebula clouds (teal)
+        col = mix(col, col + teal * 0.18 * clouds, clouds * 0.7);
+        // Deep cloud shadows
+        col = mix(col, col - deepNavy * 0.3 * deepClouds, deepClouds * 0.4);
+
+        // Golden highlights where clouds are densest
+        float goldMask = smoothstep(0.55, 0.85, clouds) * smoothstep(0.3, 0.6, deepClouds);
+        col += gold * 0.12 * goldMask;
+
+        // Violet accents (rare, on the periphery)
+        float violetMask = smoothstep(0.4, 0.7, fbm(vec3(p * 2.0 + 50.0, t * 0.3)));
+        col += violet * 0.08 * violetMask * (1.0 - vignette);
+
+        // Charge boost — when ritual active, brighten everything + add gold
+        col += teal * 0.15 * uCharge;
+        col += gold * 0.25 * uCharge * clouds;
+
+        // Lucid boost — subtle, persistent for users with lucid dreams
+        col += teal * 0.05 * uLucidBoost;
+
+        // === STARFIELD (procedural, parallax) ===
+        // Two layers: distant (small, many) + near (larger, fewer, brighter)
+        for (int layer = 0; layer < 2; layer++) {
+          float scale = layer == 0 ? 180.0 : 80.0;
+          float brightBoost = layer == 0 ? 0.6 : 1.0;
+          vec2 starUv = uv * scale + uMouse * (layer == 0 ? 5.0 : 12.0);
+          vec2 cell = floor(starUv);
+          vec2 cellUv = fract(starUv) - 0.5;
+          float starSeed = hash(cell);
+          // Only ~15% of cells have a star
+          if (starSeed > 0.85) {
+            float twinkle = 0.5 + 0.5 * sin(uTime * (1.0 + starSeed * 2.0) + starSeed * 10.0);
+            float starDist = length(cellUv);
+            float star = smoothstep(0.15, 0.0, starDist) * twinkle * brightBoost;
+            // Star color: mostly teal-white, occasional gold
+            vec3 starCol = starSeed > 0.97 ? gold : mix(teal, vec3(1.0), 0.4);
+            col += starCol * star * 0.8;
+            // Glow halo for bright stars
+            col += starCol * star * smoothstep(0.4, 0.0, starDist) * 0.15;
+          }
+        }
+
+        // Subtle film grain to prevent banding
+        float grain = hash(uv * uResolution + uTime) * 0.015;
+        col += grain - 0.0075;
+
+        // Final vignette
+        col *= 1.0 - length(p) * 0.15;
+
+        gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+      }
+    `;
+
+    __nebulaMaterial = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        uMouse: { value: new THREE.Vector2(0, 0) },
+        uCharge: { value: 0 },
+        uLucidBoost: { value: 0 },
+      },
+      depthTest: false,
+      depthWrite: false,
+    });
+
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), __nebulaMaterial);
+    __nebulaScene.add(quad);
+
+    // Mouse parallax
+    let mouseX = 0, mouseY = 0;
+    const onMouseMove = (e) => {
+      mouseX = (e.clientX / window.innerWidth) - 0.5;
+      mouseY = (e.clientY / window.innerHeight) - 0.5;
+    };
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length) {
+        mouseX = (e.touches[0].clientX / window.innerWidth) - 0.5;
+        mouseY = (e.touches[0].clientY / window.innerHeight) - 0.5;
+      }
+    }, { passive: true });
+
+    // Resize
+    const onResize = () => {
+      __nebulaRenderer.setSize(window.innerWidth, window.innerHeight);
+      __nebulaMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', onResize);
+
+    // Pause when tab hidden
+    let visible = true;
+    document.addEventListener('visibilitychange', () => {
+      visible = !document.hidden;
+    });
+
+    // Render loop
+    __nebulaActive = true;
+    const clock = new THREE.Clock();
+    const animate = () => {
+      if (!__nebulaActive) return;
+      __nebulaRAF = requestAnimationFrame(animate);
+      if (!visible) return;
+      const t = clock.getElapsedTime();
+      __nebulaMaterial.uniforms.uTime.value = t;
+      // Smooth mouse follow
+      __nebulaMaterial.uniforms.uMouse.value.x += (mouseX - __nebulaMaterial.uniforms.uMouse.value.x) * 0.05;
+      __nebulaMaterial.uniforms.uMouse.value.y += (mouseY - __nebulaMaterial.uniforms.uMouse.value.y) * 0.05;
+      // Charge uniform is updated externally by ritual engine
+      try { __nebulaRenderer.render(__nebulaScene, __nebulaCamera); } catch(e) { stopNebula(); }
+    };
+    animate();
+
+    // Expose API for ritual engine to drive uCharge
+    window.__nebulaSetCharge = (v) => {
+      if (__nebulaMaterial) __nebulaMaterial.uniforms.uCharge.value = Math.max(0, Math.min(1, v));
+    };
+    window.__nebulaSetLucidBoost = (v) => {
+      if (__nebulaMaterial) __nebulaMaterial.uniforms.uLucidBoost.value = Math.max(0, Math.min(1, v));
+    };
+
+    // Set initial lucid boost based on user's lucid dream count
+    setTimeout(async () => {
+      try {
+        const lucidCount = dreamsCache.filter(d => d.isLucid).length;
+        window.__nebulaSetLucidBoost(Math.min(1, lucidCount / 20));
+      } catch(e) {}
+    }, 2000);
+
+    return true;
+  } catch (e) {
+    console.warn('Volumetric nebula init failed, falling back to 2D canvas', e);
+    stopNebula();
+    return false;
+  }
+}
+
+function stopNebula() {
+  __nebulaActive = false;
+  if (__nebulaRAF) cancelAnimationFrame(__nebulaRAF);
+  __nebulaRAF = null;
+  if (__nebulaRenderer) {
+    try { __nebulaRenderer.dispose(); } catch(e) {}
+    __nebulaRenderer = null;
+  }
+  __nebulaScene = null;
+  __nebulaCamera = null;
+  __nebulaMaterial = null;
 }
 
 function initLivingBackground() {
@@ -3038,6 +3399,8 @@ function showToast(message, icon='check-circle', variant='info') {
   const color = variant === 'success' ? 'var(--success)' : variant === 'warning' ? 'var(--warning)' : variant === 'error' ? 'var(--danger)' : 'var(--accent)';
   t.innerHTML=`<i data-lucide="${icon}" style="width:18px;height:18px;color:${color};flex-shrink:0;"></i><span>${message}</span>`;
   c.appendChild(t); lucide.createIcons({nodes:[t]});
+  // GSAP entrance (falls back to CSS animation if GSAP missing)
+  animateToastEntrance(t);
   setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(40px)';t.style.transition='all 0.3s ease';setTimeout(()=>t.remove(),300);},3000);
 }
 
@@ -4610,6 +4973,59 @@ async function renderPage(page) {
   const ids = dreamsCache.map(d=>d.id);
   loadImagesIntoDOM(ids, main);
   setupMagneticButtons();
+  // GSAP-powered staggered entrance for cards (graceful fallback if GSAP missing)
+  animatePageEntrance(page);
+}
+
+// ==================== GSAP UI ANIMATIONS (v5) ====================
+function animatePageEntrance(page) {
+  if (typeof gsap === 'undefined') return; // GSAP not loaded
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  try {
+    // Stagger all direct card children of .main-content
+    const cards = document.querySelectorAll('#mainContent > .page > .card, #mainContent > .page > .dream-list > .dream-entry-card, #mainContent > .page > .dash-stats > .stat-card');
+    if (cards.length) {
+      gsap.from(cards, {
+        opacity: 0,
+        y: 16,
+        duration: 0.5,
+        ease: 'power3.out',
+        stagger: 0.04,
+        clearProps: 'opacity,transform',
+      });
+    }
+    // Hero section special entrance
+    const hero = document.querySelector('#mainContent .hero-section');
+    if (hero) {
+      gsap.from(hero, {
+        opacity: 0, y: -10, scale: 0.98, duration: 0.7, ease: 'power3.out', clearProps: 'all',
+      });
+    }
+  } catch (e) { /* GSAP failed silently */ }
+}
+
+// GSAP-powered modal entrance (replaces CSS animation for richer effect)
+function animateModalEntrance(modalEl) {
+  if (typeof gsap === 'undefined' || !modalEl) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  try {
+    gsap.fromTo(modalEl,
+      { opacity: 0, scale: 0.92, y: 20 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)', clearProps: 'transform' }
+    );
+  } catch (e) {}
+}
+
+// GSAP-powered toast entrance
+function animateToastEntrance(toastEl) {
+  if (typeof gsap === 'undefined' || !toastEl) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  try {
+    gsap.fromTo(toastEl,
+      { opacity: 0, x: 60, scale: 0.9 },
+      { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }
+    );
+  } catch (e) {}
 }
 
 // Animate a number from 0 to target value over duration
@@ -4801,6 +5217,7 @@ async function openDreamForm(editId=null) {
       <div style="display:flex;gap:10px;justify-content:flex-end;">${existing?`<button class="btn btn-danger btn-sm" onclick="deleteDreamAction('${existing.id}')">Delete</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveDream('${editId||''}')">${existing?'Update':'Save Dream'}</button></div>
     </div></div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   let currentLucidity=lucidity;
   overlay.querySelectorAll('.star-btn').forEach(btn=>{btn.addEventListener('click',()=>{currentLucidity=parseInt(btn.dataset.val);overlay.querySelectorAll('.star-btn').forEach(b=>b.classList.toggle('filled',parseInt(b.dataset.val)<=currentLucidity));});});
   overlay.querySelectorAll('.emotion-chips .chip').forEach(chip=>{chip.addEventListener('click',()=>chip.classList.toggle('selected'));});
@@ -4916,6 +5333,7 @@ async function viewDream(id) {
       </div>
     </div></div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
   // Load gallery strip after modal is shown
   setTimeout(() => loadDreamGallery('${d.id}'), 100);
@@ -5398,6 +5816,7 @@ async function openSleepLogForm(prefillDate) {
     </div>
   </div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   let currentQ = quality;
   overlay.querySelectorAll('.qbar').forEach(bar => {
     bar.addEventListener('click', () => {
@@ -5763,6 +6182,7 @@ async function openRecurringForm(editId=null) {
     </div>
   </div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
 }
 
@@ -5817,6 +6237,7 @@ async function viewRecurring(id) {
     </div>
   </div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
   // Load any dream images
   loadImagesIntoDOM(matches.map(d => d.id), overlay);
@@ -6273,6 +6694,7 @@ async function viewDictionaryEntry(symbol) {
     ` : `<p class="text-muted" style="font-size:0.85rem;">No dreams in your journal mention this symbol yet.</p>`}
   </div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
   if (matches.length) loadImagesIntoDOM(matches.map(d => d.id), overlay);
 }
@@ -6958,6 +7380,7 @@ function showKeyboardHelp() {
     </div>
   </div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
 }
 
@@ -6995,6 +7418,7 @@ async function openStylePicker(dreamId, opts = {}) {
     </div>
   </div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
   // Keyboard: Enter to confirm, Esc handled globally
   overlay.addEventListener('keydown', e => {
@@ -7053,6 +7477,7 @@ async function openPromptPreview(dreamId) {
     </div>
   </div>`;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
 }
 
@@ -7081,6 +7506,7 @@ function openLightbox(url, meta = null) {
     </div>
   `;
   document.body.appendChild(overlay); lucide.createIcons({nodes:[overlay]});
+  animateModalEntrance(overlay.querySelector('.modal'));
   overlay.addEventListener('click', e => { if(e.target===overlay) closeLightbox(); });
 }
 
@@ -7212,6 +7638,29 @@ function startRitualAudio() {
     __ritualDroneOsc.connect(filter);
     __ritualDroneOsc2.connect(filter);
     filter.connect(__ritualDroneGain);
+
+    // === Tone.js analyser for audio-reactive orb (v5) ===
+    // Create an AnalyserNode on the same ctx so the orb shader can read levels.
+    // We use a raw Web Audio analyser (Tone.js wraps this, but raw is sufficient
+    // and avoids needing Tone.start() which requires explicit user gesture).
+    try {
+      const analyser = __ritualAudioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      __ritualDroneGain.connect(analyser);
+      // Wrap into a Tone-like interface for the orb shader's expected API
+      const analyserWrapper = {
+        _analyser: analyser,
+        _data: new Uint8Array(analyser.frequencyBinCount),
+        getValue: function() {
+          this._analyser.getByteTimeDomainData(this._data);
+          // Convert 0-255 to -1..1 range
+          return Array.from(this._data).map(v => (v - 128) / 128);
+        }
+      };
+      setRitualOrbAudioAnalyser(analyserWrapper);
+    } catch(e) { /* analyser optional */ }
+
     __ritualDroneGain.connect(__ritualAudioCtx.destination);
     __ritualDroneOsc.start();
     __ritualDroneOsc2.start();
@@ -7263,6 +7712,7 @@ async function openMildRitual() {
     <div class="ritual-subtitle">${alreadyCompleted ? 'You have already charged your intention tonight. Hold again to reinforce.' : 'Hold the orb. Breathe with it. Let the affirmation sink into your dreaming mind.'}</div>
 
     <div class="ritual-orb-wrap">
+      <canvas class="ritual-orb-canvas" id="ritualOrbCanvas" width="280" height="280" aria-hidden="true"></canvas>
       <svg class="ritual-progress-arc" viewBox="0 0 320 320">
         <defs>
           <linearGradient id="ritualGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -7382,6 +7832,9 @@ async function openMildRitual() {
 
   // Start animation loop
   __ritualState.rafId = requestAnimationFrame(ritualTick);
+
+  // Initialize shader orb (async, non-blocking)
+  initRitualOrbShader();
 }
 
 function closeMildRitual() {
@@ -7395,13 +7848,257 @@ function closeMildRitual() {
   document.removeEventListener('keyup', __ritualState._spaceHandler);
   window.removeEventListener('resize', __ritualState._resizeHandler);
   stopRitualAudio();
+  stopRitualOrbShader();
   vibrateSafe(0); // cancel any ongoing vibration
+  // Reset nebula background charge
+  if (window.__nebulaSetCharge) window.__nebulaSetCharge(0);
   __ritualState = null;
   const overlay = document.getElementById('ritualOverlay');
   if (overlay) {
     overlay.style.animation = 'fadeIn 0.3s reverse forwards';
     setTimeout(() => overlay.remove(), 300);
   }
+}
+
+// ==================== RITUAL ORB SHADER (Three.js GLSL) ====================
+// Raymarched SDF sphere with noise displacement, glow, and charge-driven deformation.
+// Falls back gracefully if Three.js unavailable (CSS orb pseudo-elements remain visible).
+let __orbRenderer = null, __orbScene = null, __orbCamera = null, __orbMaterial = null, __orbRAF = null;
+let __orbAudioAnalyser = null, __orbAudioData = null;
+
+async function initRitualOrbShader() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.__lucidLowPower) return;
+  // Ensure THREE is available (shared with nebula)
+  if (typeof THREE === 'undefined') {
+    try { window.THREE = await import('three'); } catch (e) { return; }
+  }
+  const THREE = window.THREE;
+  if (!THREE || !THREE.WebGLRenderer) return;
+
+  const canvas = document.getElementById('ritualOrbCanvas');
+  if (!canvas) return;
+
+  try {
+    __orbRenderer = new THREE.WebGLRenderer({
+      canvas, antialias: true, alpha: true, premultipliedAlpha: false,
+      powerPreference: 'high-performance',
+    });
+    __orbRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    __orbRenderer.setSize(280, 280, false);
+    __orbRenderer.setClearColor(0x000000, 0);
+
+    __orbScene = new THREE.Scene();
+    __orbCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `;
+
+    // Raymarched SDF sphere with FBM noise displacement.
+    // The sphere morphs based on charge (0..1) and audio level (0..1).
+    const fragmentShader = `
+      precision highp float;
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform float uCharge;     // 0..1 ritual charge
+      uniform float uAudio;      // 0..1 audio level from Tone.js analyser
+      uniform float uHolding;    // 0..1 whether user is currently holding
+
+      // 3D Simplex noise (Ashima Arts)
+      vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+      vec4 mod289(vec4 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+      vec4 permute(vec4 x){ return mod289(((x*34.0)+1.0)*x); }
+      vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+      float snoise(vec3 v){
+        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+        vec3 i  = floor(v + dot(v, C.yyy));
+        vec3 x0 = v - i + dot(i, C.xxx);
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min(g.xyz, l.zxy);
+        vec3 i2 = max(g.xyz, l.zxy);
+        vec3 x1 = x0 - i1 + C.xxx;
+        vec3 x2 = x0 - i2 + C.yyy;
+        vec3 x3 = x0 - D.yyy;
+        i = mod289(i);
+        vec4 p = permute(permute(permute(
+                   i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                 + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                 + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+        float n_ = 0.142857142857;
+        vec3 ns = n_ * D.wyz - D.xzx;
+        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0 * x_);
+        vec4 x = x_ * ns.x + ns.yyyy;
+        vec4 y = y_ * ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+        vec4 b0 = vec4(x.xy, y.xy);
+        vec4 b1 = vec4(x.zw, y.zw);
+        vec4 s0 = floor(b0)*2.0 + 1.0;
+        vec4 s1 = floor(b1)*2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+        vec3 p0 = vec3(a0.xy, h.x);
+        vec3 p1 = vec3(a0.zw, h.y);
+        vec3 p2 = vec3(a1.xy, h.z);
+        vec3 p3 = vec3(a1.zw, h.w);
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m * m;
+        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+      }
+
+      float fbm(vec3 p) {
+        float v = 0.0, a = 0.5;
+        for (int i = 0; i < 4; i++) { v += a * snoise(p); p *= 2.0; a *= 0.5; }
+        return v;
+      }
+
+      // SDF of a sphere with noise displacement
+      float sdSphere(vec3 p, float r) {
+        // Displacement scales with charge + audio
+        float disp = fbm(p * 2.0 + uTime * 0.1) * (0.08 + uCharge * 0.25 + uAudio * 0.15);
+        return length(p) - r + disp;
+      }
+
+      vec3 calcNormal(vec3 p, float r) {
+        float eps = 0.01;
+        vec2 h = vec2(eps, 0.0);
+        return normalize(vec3(
+          sdSphere(p + h.xyy, r) - sdSphere(p - h.xyy, r),
+          sdSphere(p + h.yxy, r) - sdSphere(p - h.yxy, r),
+          sdSphere(p + h.yyx, r) - sdSphere(p - h.yyx, r)
+        ));
+      }
+
+      void main() {
+        vec2 uv = vUv * 2.0 - 1.0;
+        vec3 ro = vec3(0.0, 0.0, 2.5);
+        vec3 rd = normalize(vec3(uv, -1.5));
+
+        // Raymarch
+        float t = 0.0;
+        float r = 0.7;
+        bool hit = false;
+        vec3 hitPos = vec3(0.0);
+        for (int i = 0; i < 48; i++) {
+          vec3 p = ro + rd * t;
+          float d = sdSphere(p, r);
+          if (d < 0.001) { hit = true; hitPos = p; break; }
+          if (t > 4.0) break;
+          t += d * 0.9;
+        }
+
+        // Background fade (transparent so CSS shows through)
+        if (!hit) {
+          // Soft glow around the orb
+          float glow = exp(-length(uv) * 1.5) * (0.15 + uCharge * 0.4);
+          vec3 glowCol = mix(vec3(0.62, 0.92, 0.91), vec3(0.96, 0.85, 0.48), uCharge);
+          gl_FragColor = vec4(glowCol * glow, glow * 0.6);
+          return;
+        }
+
+        vec3 n = calcNormal(hitPos, r);
+
+        // Lighting
+        vec3 lightDir = normalize(vec3(0.5, 0.7, 1.0));
+        float diff = max(0.0, dot(n, lightDir));
+        float fresnel = pow(1.0 - max(0.0, dot(n, -rd)), 2.5);
+
+        // Color: teal at low charge, shifting to gold at high charge
+        vec3 teal = vec3(0.62, 0.92, 0.91);
+        vec3 deepTeal = vec3(0.37, 0.74, 0.73);
+        vec3 gold = vec3(0.96, 0.85, 0.48);
+        vec3 navy = vec3(0.05, 0.10, 0.16);
+
+        vec3 baseCol = mix(deepTeal, teal, diff);
+        baseCol = mix(baseCol, gold, uCharge * 0.7);
+        // Fresnel rim
+        baseCol += mix(teal, gold, uCharge) * fresnel * (0.6 + uCharge * 0.4);
+        // Inner glow when holding
+        baseCol += teal * uHolding * 0.15 * (1.0 - fresnel);
+        // Audio reactivity — pulses brightness
+        baseCol *= 1.0 + uAudio * 0.3;
+
+        // Subsurface scatter tint
+        baseCol += navy * 0.1 * (1.0 - diff);
+
+        // Alpha — fully opaque where hit, soft edge
+        float alpha = 1.0;
+
+        gl_FragColor = vec4(clamp(baseCol, 0.0, 1.0), alpha);
+      }
+    `;
+
+    __orbMaterial = new THREE.ShaderMaterial({
+      vertexShader, fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uCharge: { value: 0 },
+        uAudio: { value: 0 },
+        uHolding: { value: 0 },
+      },
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    });
+
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), __orbMaterial);
+    __orbScene.add(quad);
+
+    const clock = new THREE.Clock();
+    const animate = () => {
+      if (!__orbRenderer) return;
+      __orbRAF = requestAnimationFrame(animate);
+      __orbMaterial.uniforms.uTime.value = clock.getElapsedTime();
+      // Read audio level if analyser available
+      if (__orbAudioAnalyser) {
+        try {
+          const vals = __orbAudioAnalyser.getValue();
+          let sum = 0;
+          for (let i = 0; i < vals.length; i++) sum += Math.abs(vals[i]);
+          const avg = sum / vals.length;
+          __orbMaterial.uniforms.uAudio.value = Math.min(1, avg * 3);
+        } catch(e) {}
+      }
+      try { __orbRenderer.render(__orbScene, __orbCamera); } catch(e) { stopRitualOrbShader(); }
+    };
+    animate();
+  } catch (e) {
+    console.warn('Ritual orb shader init failed', e);
+    stopRitualOrbShader();
+  }
+}
+
+function stopRitualOrbShader() {
+  if (__orbRAF) cancelAnimationFrame(__orbRAF);
+  __orbRAF = null;
+  if (__orbRenderer) {
+    try { __orbRenderer.dispose(); } catch(e) {}
+    __orbRenderer = null;
+  }
+  __orbScene = null; __orbCamera = null; __orbMaterial = null;
+  __orbAudioAnalyser = null;
+}
+
+function setRitualOrbCharge(charge, holding) {
+  if (__orbMaterial) {
+    __orbMaterial.uniforms.uCharge.value = Math.max(0, Math.min(1, charge));
+    __orbMaterial.uniforms.uHolding.value = holding ? 1 : 0;
+  }
+}
+
+function setRitualOrbAudioAnalyser(analyser) {
+  __orbAudioAnalyser = analyser;
 }
 
 // Main animation tick
@@ -7426,6 +8123,10 @@ function ritualTick(now) {
   // Update DOM
   const orb = document.getElementById('ritualOrb');
   if (orb) orb.style.setProperty('--charge', s.progress.toFixed(3));
+
+  // Push charge to shader orb + nebula background for synchronized visual feedback
+  setRitualOrbCharge(s.progress, s.holding);
+  if (window.__nebulaSetCharge) window.__nebulaSetCharge(s.progress);
 
   const arcFill = document.getElementById('ritualArcFill');
   if (arcFill) {
